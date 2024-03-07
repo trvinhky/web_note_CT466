@@ -1,0 +1,15 @@
+@import url('https://fonts.googleapis.com/css2?family=Moirai+One&display=swap');
+
+a {
+    text-decoration: none;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 2.5rem;
+    font-family: 'Moirai One', system-ui;
+    font-weight: 400;
+    color: #000;
+}

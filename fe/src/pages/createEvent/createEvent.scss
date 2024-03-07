@@ -1,0 +1,104 @@
+.create-form {
+    .title {
+        text-align: center;
+        text-transform: capitalize;
+        font-size: 2rem;
+    }
+
+    .group-input {
+        margin-top: 15px;
+
+        &>label {
+            margin-bottom: 6px;
+            display: block;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        &__box {
+            width: 100%;
+            border: 1px solid #d9d9d9;
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            overflow: hidden;
+            padding: 4px 10px;
+            border-radius: 2px;
+            font-size: 14px;
+
+            .member {
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                background-color: #ddd;
+                padding: 4px 6px;
+                border-radius: 2px;
+                overflow: hidden;
+
+                span {
+                    display: block;
+                    width: 15px;
+                    height: 15px;
+                    background-color: red;
+                    border-radius: 50%;
+                    cursor: pointer;
+                }
+            }
+
+            input {
+                flex: 1;
+                border: none;
+                line-height: 1.5;
+
+                &:focus,
+                &:focus-visible {
+                    outline: none;
+                }
+            }
+        }
+
+        &__list {
+            position: relative;
+            padding: 4px;
+            max-height: 100px;
+            overflow-x: hidden;
+            overflow-y: auto;
+            display: none;
+
+            li {
+                display: block;
+                padding: 4px 10px;
+                transition: 0.3s;
+
+                &:hover {
+                    background-color: #ddd;
+                    cursor: pointer;
+                }
+            }
+        }
+    }
+
+    .group-btn {
+        margin-top: 15px;
+        display: flex;
+        justify-content: end;
+
+        button {
+            padding: 8px 35px;
+            border-radius: 15px;
+            background-color: #fff;
+            border: 1px solid #000;
+            color: #000;
+            transition: 0.3s;
+            text-transform: uppercase;
+            cursor: pointer;
+
+            &:hover {
+                background-color: #000;
+                color: #fff;
+            }
+        }
+    }
+}

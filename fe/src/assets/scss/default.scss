@@ -1,0 +1,56 @@
+.center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.container {
+    max-width: 1200px;
+    width: 100%;
+    overflow: hidden;
+}
+
+.default {
+
+    &-content {
+        overflow: auto;
+        max-height: calc(100vh - 60px);
+    }
+
+    &-avatar {
+        margin-top: 20px;
+
+        &__name {
+            display: block;
+            text-align: center;
+            margin: 10px 0;
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        &__logout {
+            display: block;
+            padding: 4px 15px;
+            border: none;
+            background-color: #e74c3c;
+            color: #fff;
+            font-size: 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    }
+
+    &-nav {
+        margin-top: 20px;
+
+        &__link {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 1.2rem;
+            padding: 4px 0;
+            margin-bottom: 10px;
+            color: #000;
+        }
+    }
+}
