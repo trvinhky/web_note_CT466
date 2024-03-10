@@ -15,11 +15,11 @@ class User extends NotesAPI {
         return await this.getAPI('/user/count')
     }
 
-    public async searchAPI(userEmail: string): Promise<APIType<UserData>> {
+    public async searchAPI(userEmail: String): Promise<APIType<UserData>> {
         return await this.getAPI(`/user/search/${userEmail}`)
     }
 
-    public async getInfo(id: string): Promise<APIType<UserData>> {
+    public async getInfo(id: String): Promise<APIType<UserData>> {
         return await this.getAPI(`/user/info/${id}`)
     }
 

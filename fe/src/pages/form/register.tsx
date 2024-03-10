@@ -1,17 +1,18 @@
-import { Link } from "react-router-dom";
 import './form.scss'
 import { useState } from "react";
 import { isValidEmail, isValidPassword, isValidPhoneVN, isValidText } from "~/utils/validation";
 import User from '~/services/user'
 import { UserData } from '~/types/dataType';
+import { ToggleLoginFunction } from './index';
+import { message } from 'antd';
 
-const Register = () => {
+const Register = ({ ToggleLogin }: { ToggleLogin: ToggleLoginFunction }) => {
+    const [messageApi, contextHolder] = message.useMessage();
     const [email, setEmail] = useState<string>('');
     const [password, setPassword] = useState<string>('');
     const [userName, setUserName] = useState<string>('');
     const [phone, setPhone] = useState<string>('');
     const [address, setAddress] = useState<string>('');
-    const [isOK, setIsOK] = useState<boolean>(true)
 
     const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setEmail(e.target.value);
@@ -33,35 +34,49 @@ const Register = () => {
         setAddress(e.target.value);
     };
 
+    const resetValue = () => {
+        setEmail('')
+        setAddress('')
+        setPassword('')
+        setUserName('')
+        setPhone('')
+    }
+
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        let isFormValid = true;
 
         if (!isValidEmail(email)) {
             console.log('Email:', email);
-            setIsOK(false)
+            isFormValid = false;
         }
 
         if (!isValidText(userName)) {
             console.log('userName:', userName);
-            setIsOK(false)
+            isFormValid = false;
         }
 
         if (!isValidPhoneVN(phone)) {
             console.log('Phone:', phone);
-            setIsOK(false)
+            isFormValid = false;
         }
 
         if (!isValidPassword(password)) {
             console.log('Password:', password);
-            setIsOK(false)
+            isFormValid = false;
         }
 
         if (!isValidText(address)) {
             console.log('Address:', address);
-            setIsOK(false)
+            isFormValid = false;
         }
 
-        if (isOK) {
+        if (isFormValid) {
+            messageApi.open({
+                key: 'updatable',
+                type: 'loading',
+                content: 'Loading...',
+            });
             try {
                 const user: UserData = {
                     userName,
@@ -71,15 +86,37 @@ const Register = () => {
                     userPhone: phone
                 }
                 const res = await User.signUp(user)
-                console.log(res)
+                if (res.errorCode === 0) {
+                    messageApi.open({
+                        key: 'updatable',
+                        type: 'success',
+                        content: res.message,
+                        duration: 2,
+                    });
+                    resetValue()
+                } else {
+                    messageApi.open({
+                        key: 'updatable',
+                        type: 'error',
+                        content: res.message,
+                        duration: 2,
+                    });
+                }
             } catch (e) {
                 console.log(e)
+                messageApi.open({
+                    key: 'updatable',
+                    type: 'error',
+                    content: 'Sign Up failed',
+                    duration: 2,
+                });
             }
         }
     };
 
     return (
         <form className='form' onSubmit={handleSubmit}>
+            {contextHolder}
             <h2 className="form-title">Sign Up</h2>
             <input
                 type="email"
@@ -126,7 +163,7 @@ const Register = () => {
             </div>
             <div className="form-group">
                 <span></span>
-                <Link to='/login'>Sign In</Link>
+                <span onClick={ToggleLogin} className='form-group__link'>Sign In</span>
             </div>
         </form>
     );

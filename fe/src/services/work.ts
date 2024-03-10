@@ -3,7 +3,7 @@ import { APIType } from "~/types/apiType";
 import { WorkData, WorkInfo } from "~/types/dataType";
 
 class Work extends NotesAPI {
-    public async create(data: WorkData): Promise<APIType<undefined>> {
+    public async create(data: WorkData): Promise<APIType<WorkData>> {
         return await this.postAPI('/work/create', data)
     }
 

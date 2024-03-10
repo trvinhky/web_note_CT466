@@ -77,6 +77,12 @@
                     cursor: pointer;
                 }
             }
+
+            span {
+                display: block;
+                padding: 4px 10px;
+                transition: 0.3s;
+            }
         }
     }
 

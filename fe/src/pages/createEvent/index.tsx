@@ -2,11 +2,18 @@ import './createEvent.scss'
 import type { GetProps } from 'antd';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
-import { Input, DatePicker, Radio, Flex } from 'antd';
+import { Input, DatePicker, Radio, Flex, message } from 'antd';
 import { DATEFORMATFULL, TIMEFORMAT } from '~/utils/const';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { isValidText } from '~/utils/validation';
 import type { RadioChangeEvent } from 'antd';
+import User from '~/services/user'
+import Mark from '~/services/mark'
+import Work from '~/services/work'
+import Worker from '~/services/worker'
+import { MarkData, UserData } from '~/types/dataType';
+import { userInfoSelector } from '~/store/selectors';
+import { useSelector } from 'react-redux';
 
 type RangePickerProps = GetProps<typeof DatePicker.RangePicker>;
 
@@ -17,7 +24,32 @@ const CreateEvent = () => {
     const [title, setTitle] = useState<string>('')
     const [mark, setMark] = useState<string>('low')
     const [member, setMember] = useState<string>('')
+    const [listSearch, setListSearch] = useState<UserData[]>([])
+    const [listMember, setListMember] = useState<UserData[]>([])
     const [isShowList, setIsShowList] = useState<boolean>(false)
+    const [listDate, setListDate] = useState<string[]>([])
+    const [listMark, setListMark] = useState<MarkData[]>([])
+    const [messageApi, contextHolder] = message.useMessage();
+    const userInfo = useSelector(userInfoSelector)
+
+    useEffect(() => {
+        const getMarkData = async () => {
+            try {
+                const res = await Mark.getAll()
+
+                if (res.errorCode === 0 && Array.isArray(res.data)) {
+                    if (res.data.length > 0) {
+                        setMark(res.data[0]._id as string)
+                    }
+                    setListMark(res.data)
+                }
+            } catch (e) {
+                console.log(e)
+            }
+        }
+
+        getMarkData()
+    }, [])
 
     const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setTitle(e.target.value);
@@ -27,8 +59,21 @@ const CreateEvent = () => {
         setMark(value);
     };
 
-    const handleMemberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleMemberChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         setMember(e.target.value);
+
+        if (member) {
+            setTimeout(async () => {
+                try {
+                    const res = await User.searchAPI(member)
+                    if (res.errorCode === 0 && Array.isArray(res.data)) {
+                        setListSearch(res.data)
+                    }
+                } catch (e) {
+                    console.log(e)
+                }
+            }, 3000)
+        }
     };
 
     const handleShow = () => {
@@ -39,44 +84,126 @@ const CreateEvent = () => {
         }
     }
 
-    const range = (start: number, end: number) => {
-        const result = [];
-        for (let i = start; i < end; i++) {
-            result.push(i);
-        }
-        return result;
-    };
-
     const disabledDate: RangePickerProps['disabledDate'] = (current) => {
         // Can not select days before today and today
         return current && current < dayjs().endOf('day');
     };
 
-    const disabledRangeTime: RangePickerProps['disabledTime'] = (_, type) => {
-        if (type === 'start') {
-            return {
-                disabledHours: () => range(0, 60).splice(4, 20),
-                disabledMinutes: () => range(30, 60),
-                disabledSeconds: () => [55, 56],
-            };
+    const handleRemoveMember = (id: String) => {
+        const data = listMember.filter((val) => val._id !== id)
+        setListMember(data)
+    }
+
+    const handleAddMember = (data: UserData) => {
+        const check = listMember.findIndex((val) => val._id === data._id)
+        if (check !== -1) return
+        setListMember((prev) => [...prev, data])
+        setMember('')
+        setIsShowList(false)
+    }
+
+    const createWorker = async (userId: String, workId: String) => {
+        try {
+            const res = await Worker.create({
+                userId: userId,
+                workId: workId,
+            })
+
+            if (res.errorCode === 0) {
+                messageApi.open({
+                    key: 'updatable',
+                    type: 'success',
+                    content: res.message,
+                    duration: 2,
+                });
+            } else {
+                messageApi.open({
+                    key: 'updatable',
+                    type: 'error',
+                    content: res.message,
+                    duration: 2,
+                });
+            }
+        } catch (e) {
+            console.log(e)
         }
-        return {
-            disabledHours: () => range(0, 60).splice(20, 4),
-            disabledMinutes: () => range(0, 31),
-            disabledSeconds: () => [55, 56],
-        };
-    };
+    }
 
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        let isValid = true
 
-        if (isValidText(title)) {
+        if (!isValidText(title)) {
             console.log('Title:', title);
+            isValid = false
+        }
+
+        if (listMember.length <= 0) {
+            isValid = false
+        }
+
+        if (listDate.length !== 2) {
+            isValid = false
+        }
+
+        if (isValid && (userInfo._id || userInfo.id)) {
+            console.log({
+                listDate,
+                listMember,
+                title,
+                mark
+            })
+
+            try {
+                messageApi.open({
+                    key: 'updatable',
+                    type: 'loading',
+                    content: 'Loading...',
+                });
+
+                const res = await Work.create({
+                    workTitle: title,
+                    userId: userInfo._id || userInfo.id,
+                    markId: mark,
+                    workDateStart: new Date(listDate[0]),
+                    workDateEnd: new Date(listDate[1])
+                })
+                if (res.errorCode === 0) {
+                    messageApi.open({
+                        key: 'updatable',
+                        type: 'success',
+                        content: res.message,
+                        duration: 2,
+                    });
+
+                    listMember.forEach(async (val) => {
+                        if (res.data && !Array.isArray(res.data)) {
+                            await createWorker((val._id || val.id) as String, res.data._id as String)
+                        }
+                    })
+                } else {
+                    messageApi.open({
+                        key: 'updatable',
+                        type: 'error',
+                        content: res.message,
+                        duration: 2,
+                    });
+                }
+            } catch (e) {
+                console.log(e)
+                messageApi.open({
+                    key: 'updatable',
+                    type: 'error',
+                    content: 'Sign In failed',
+                    duration: 2,
+                });
+            }
         }
     };
 
     return (
         <form className="create-form" onSubmit={handleSubmit}>
+            {contextHolder}
             <h2 className="title">Create New Event</h2>
             <div className="group-input">
                 <label htmlFor="title">Title</label>
@@ -90,9 +217,19 @@ const CreateEvent = () => {
             <div className="group-input">
                 <label htmlFor="member">Members</label>
                 <div className="group-input__box">
-                    <p className="member">
-                        kyb2005802@student.ctu.edu.vn <span></span>
-                    </p>
+                    {
+                        listMember.length > 0 &&
+                        listMember.map((val) => (
+                            <p
+                                className="member"
+                                key={val._id as string}
+                                onClick={() => handleRemoveMember(val._id as String)}
+
+                            >
+                                {val.userEmail} <span></span>
+                            </p>
+                        ))
+                    }
                     <input
                         type="text"
                         id='member'
@@ -102,7 +239,18 @@ const CreateEvent = () => {
                     />
                 </div>
                 <ul className="group-input__list" style={{ display: isShowList ? 'block' : 'none' }}>
-                    <li>kyb2005802@student.ctu.edu.vn</li>
+                    {
+                        listSearch.length > 0
+                            ? listSearch.map((val) => (
+                                <li
+                                    key={val._id as string}
+                                    onClick={() => handleAddMember(val)}
+                                >
+                                    {val.userEmail}
+                                </li>
+                            ))
+                            : (<span>Not Found</span>)
+                    }
                 </ul>
             </div>
             <Flex gap='middle' align='flex-end'>
@@ -110,26 +258,28 @@ const CreateEvent = () => {
                     <label htmlFor="date">Date</label>
                     <RangePicker
                         disabledDate={disabledDate}
-                        disabledTime={disabledRangeTime}
                         showTime={{
                             hideDisabledOptions: true,
                             defaultValue: [dayjs('00:00:00', TIMEFORMAT), dayjs('11:59:59', TIMEFORMAT)],
                         }}
                         format={DATEFORMATFULL}
-                        onChange={(date, dateString) => {
-                            console.log(date, dateString);
+                        onChange={(_, dateString) => {
+                            setListDate(dateString)
                         }}
                     />
                 </div>
                 <div className="group-input">
                     <Radio.Group
-                        defaultValue={mark}
                         buttonStyle="solid"
                         style={{ display: 'flex' }}
-                        onChange={handleMarkChange}>
-                        <Radio.Button value="low">Low</Radio.Button>
-                        <Radio.Button value="normal">Normal</Radio.Button>
-                        <Radio.Button value="high">High</Radio.Button>
+                        onChange={handleMarkChange}
+                        value={mark}
+                    >
+                        {
+                            listMark.length > 0 && listMark.map((val) => (
+                                <Radio.Button value={val._id} key={val._id as string}>{val.markName}</Radio.Button>
+                            ))
+                        }
                     </Radio.Group>
                 </div>
             </Flex>
