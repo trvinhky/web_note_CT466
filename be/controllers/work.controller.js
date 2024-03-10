@@ -28,7 +28,8 @@ const workControllers = {
             if (work) {
                 return res.status(200).json({
                     message: "Thêm công việc mới thành công!",
-                    errorCode: 0
+                    errorCode: 0,
+                    data: work
                 })
             } else {
                 return res.status(404).json({

@@ -208,94 +208,177 @@ const workerControllers = {
     }),
     // lấy tất cả công việc theo id người dùng
     getAllByUserId: asyncHandler(async (req, res) => {
-        const { year, month, markId, userId } = req.query
+        const { year, month, userId } = req.query;
 
-        // kiểm tra id người dùng
+        // Kiểm tra id người dùng
         if (!userId) {
             return res.status(400).json({
                 errorCode: 1,
                 message: 'id người dùng là bắt buộc!'
-            })
+            });
         }
 
         try {
-            // điều kiện
-            let conditionDate
-            let condition = { userId }
+            // Điều kiện
+            let condition;
 
             if (!isNaN(parseInt(year))) {
-                let startDate
-                let endDate
+                let startDate;
+                let endDate;
                 if (!isNaN(parseInt(month))) {
                     startDate = new Date(year, month - 1, 1);
-                    // lấy ngày cuối cùng của tháng
+                    // Lấy ngày cuối cùng của tháng
                     endDate = new Date(year, month, 0, 23, 59, 59);
                 } else {
                     startDate = new Date(year, 0, 1);
                     endDate = new Date(year, 11, 31, 23, 59, 59);
                 }
 
-                conditionDate = [
-                    { workDateStart: { $gte: startDate, $lte: endDate } },
-                    { workDateEnd: { $gte: startDate, $lte: endDate } }
-                ]
+                condition = {
+                    $and: [
+                        { workDateStart: { $gte: startDate } },
+                        { workDateEnd: { $lte: endDate } }
+                    ]
+                };
             }
 
-            // kiểm tra các trường
-            if (markId) {
-                if (conditionDate) {
-                    condition = {
-                        $and: [
-                            {
-                                $or: conditionDate
-                            },
-                            { markId, userId }
-                        ]
-                    }
-                } else {
-                    condition = { markId, userId }
-                }
-            } else {
-                if (conditionDate) {
-                    condition = {
-                        $and: [
-                            {
-                                $or: conditionDate
-                            },
-                            { userId }
-                        ]
-                    }
-                }
-            }
+            // Tìm các công việc của người dùng trong khoảng thời gian đã cho
+            const works = await workerModel.find({ userId })
+                .populate({
+                    path: "workId",
+                    match: condition,
+                    populate: [
+                        { path: "markId" },
+                        { path: "userId", select: "-userPassword" }
+                    ]
+                });
 
-            // lấy tất cả công việc theo điều kiện
-            const works = await workerModel.find(condition).populate({
-                path: "workId",
-                populate: [
-                    { path: "markId" },
-                    { path: "userId", select: "-userPassword" }
-                ]
-            });
-
-            // kiểm tra tất cả công việc đã lấy 
-            if (works) {
-                return res.status(201).json({
-                    message: "Lấy tất cả công việc thành công!",
+            // Kiểm tra tất cả công việc đã lấy 
+            if (works.length > 0) {
+                return res.status(200).json({
+                    message: "Lấy tất cả công việc của người dùng thành công!",
                     errorCode: 0,
                     data: works
-                })
+                });
             } else {
                 return res.status(404).json({
-                    message: "Lấy tất cả công việc thất bại!",
+                    message: "Không có công việc nào được tìm thấy cho người dùng!",
                     errorCode: 2
-                })
+                });
             }
         } catch (err) {
             return res.status(500).json({
                 errorCode: 3,
                 message: "Lỗi server!",
                 error: err.message
-            })
+            });
+        }
+    }),
+    // lấy tất cả công việc theo trạng thái của người dùng
+    getAllWorkByStatus: asyncHandler(async (req, res) => {
+        const { userId, status } = req.query;
+
+        // Kiểm tra id người dùng
+        if (!userId) {
+            return res.status(400).json({
+                errorCode: 1,
+                message: 'id người dùng là bắt buộc!'
+            });
+        }
+
+        // Kiểm tra trạng thái
+        if (status && [0, 1, 2].indexOf(parseInt(status)) === -1) {
+            return res.status(400).json({
+                errorCode: 1,
+                message: 'trạng thái không hợp lý!'
+            });
+        }
+
+        try {
+            // Tìm các công việc của người dùng theo trạng thái
+            const works = await workerModel.find({ userId, workerStatus: status || 0 })
+                .populate({
+                    path: "workId",
+                    populate: [
+                        { path: "markId" },
+                        { path: "userId", select: "-userPassword" }
+                    ]
+                });
+
+            // Kiểm tra tất cả công việc đã lấy 
+            if (works.length > 0) {
+                return res.status(200).json({
+                    message: "Lấy tất cả công việc của người dùng thành công!",
+                    errorCode: 0,
+                    data: works
+                });
+            } else {
+                return res.status(404).json({
+                    message: "Không có công việc nào được tìm thấy cho người dùng!",
+                    errorCode: 2
+                });
+            }
+        } catch (err) {
+            return res.status(500).json({
+                errorCode: 3,
+                message: "Lỗi server!",
+                error: err.message
+            });
+        }
+    }),
+    // lấy tất cả công việc theo ngày hiện tại
+    getAllWorkCurrent: asyncHandler(async (req, res) => {
+        const { userId } = req.params;
+
+        // Kiểm tra id người dùng
+        if (!userId) {
+            return res.status(400).json({
+                errorCode: 1,
+                message: 'id người dùng là bắt buộc!'
+            });
+        }
+
+        try {
+            // Tạo giá trị cho ngày bắt đầu và kết thúc của ngày hiện tại
+            const today = new Date();
+            const startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+            const endDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+
+            // Điều kiện
+            let condition = {
+                workDateStart: { $gte: startDate, $lt: endDate }
+            };
+
+            // Lấy tất cả công việc theo điều kiện
+            const works = await workerModel.find({ userId })
+                .populate({
+                    path: "workId",
+                    match: condition,
+                    populate: [
+                        { path: "markId" },
+                        { path: "userId", select: "-userPassword" }
+                    ]
+                });
+
+            // Kiểm tra tất cả công việc đã lấy 
+            if (works.length > 0) {
+                return res.status(200).json({
+                    message: "Lấy tất cả công việc của người dùng trong ngày hôm nay thành công!",
+                    errorCode: 0,
+                    data: works
+                });
+            } else {
+                return res.status(404).json({
+                    message: "Không có công việc nào được tìm thấy cho người dùng trong ngày hôm nay!",
+                    errorCode: 2
+                });
+            }
+        } catch (err) {
+            return res.status(500).json({
+                errorCode: 3,
+                message: "Lỗi server!",
+                error: err.message
+            });
         }
     })
 }

@@ -166,7 +166,23 @@ path: `/worker/work/${workId}`;
 // method: GET
 year: int; // option
 month: int; // option
-markId: string; // option
 userId: string;
-path: `/worker/options?year=${year}&month=${month}&markId=${markId}&userId=${userId}`;
+path: `/worker/options?year=${year}&month=${month}&userId=${userId}`;
+```
+
+## **Get All Worker By Status**
+
+```ts
+// method: GET
+status: 0 | 1 | 2; // option
+userId: string;
+path: `/worker/work?userId=${userId}&status=${status}`;
+```
+
+## **Get All Work Current**
+
+```ts
+// method: GET
+userId: string;
+path: `/worker/work-current/${userId}`;
 ```
