@@ -20,8 +20,8 @@ export type WorkData = {
     _id?: String
     id?: String
     workTitle?: String
-    workDateStart?: Date
-    workDateEnd?: Date
+    workDateStart?: String
+    workDateEnd?: String
     markId?: String
     userId?: String
 }
@@ -30,8 +30,8 @@ export type WorkInfo = {
     _id?: String
     id?: String
     workTitle?: String
-    workDateStart?: Date
-    workDateEnd?: Date
+    workDateStart?: String
+    workDateEnd?: String
     markId?: MarkData
     userId?: UserData
 }
@@ -41,7 +41,7 @@ export type WorkerData = {
     id?: String
     userId?: String
     workId?: String
-    workerCreateAt?: Date
+    workerCreateAt?: String
     workerNote?: String
     workerStatus?: 0 | 1 | 2
 }
@@ -51,7 +51,17 @@ export type WorkerInfo = {
     id?: String
     userId?: String
     workId?: WorkInfo
-    workerCreateAt?: Date
+    workerCreateAt?: String
+    workerNote?: String
+    workerStatus?: 0 | 1 | 2
+}
+
+export type Members = {
+    _id?: String
+    id?: String
+    userId?: UserData
+    workId?: String
+    workerCreateAt?: String
     workerNote?: String
     workerStatus?: 0 | 1 | 2
 }

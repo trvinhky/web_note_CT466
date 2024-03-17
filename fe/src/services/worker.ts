@@ -1,6 +1,6 @@
 import NotesAPI from "~/api";
 import { APIType } from "~/types/apiType";
-import { WorkerData, WorkerInfo } from "~/types/dataType";
+import { Members, WorkerData, WorkerInfo } from "~/types/dataType";
 
 type queryValue = {
     userId: String
@@ -41,6 +41,10 @@ class Worker extends NotesAPI {
 
     public async getAllCurrent(userId: String): Promise<APIType<WorkerInfo>> {
         return await this.getAPI(`/worker/work-current/${userId}`)
+    }
+
+    public async getMembers(workId: String): Promise<APIType<Members>> {
+        return await this.getAPI(`/worker/work/${workId}`)
     }
 }
 

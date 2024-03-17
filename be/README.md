@@ -102,8 +102,7 @@ path: `/work/edit?id=${id}&userId=${userId}`;
 ```ts
 // method: DELETE
 id: string;
-userId: string;
-path: `/work/delete?id=${id}&userId=${userId}`;
+path: `/work/delete/${id}`;
 ```
 
 ### **Get Info Work**

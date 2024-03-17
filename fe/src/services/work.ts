@@ -11,8 +11,8 @@ class Work extends NotesAPI {
         return await this.putAPI(`/work/edit?id=${id}&userId=${userId}`, data)
     }
 
-    public async delete(id: String, userId: String): Promise<APIType<undefined>> {
-        return await this.deleteAPI(`/work/delete?id=${id}&userId=${userId}`)
+    public async delete(id: String): Promise<APIType<undefined>> {
+        return await this.deleteAPI(`/work/delete/${id}`)
     }
 
     public async getInfo(id: String): Promise<APIType<WorkInfo>> {

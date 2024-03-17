@@ -1,14 +1,17 @@
 import { DeleteOutlined, EditOutlined } from '@ant-design/icons'
 import './eventList.scss'
-import { Select } from 'antd';
+import { Select, message } from 'antd';
 import { useEffect, useState } from 'react';
 import { WorkerInfo } from '~/types/dataType';
 import Worker from '~/services/worker'
 import { userInfoSelector } from '~/store/selectors';
 import { useSelector } from 'react-redux';
 import { handleTime } from '~/utils/const';
+import { Link } from 'react-router-dom';
+import Work from '~/services/work';
 
 const EventList = () => {
+    const [messageApi, contextHolder] = message.useMessage();
     const userInfo = useSelector(userInfoSelector)
     const [listEvent, setListEvent] = useState<WorkerInfo[]>([])
 
@@ -38,8 +41,46 @@ const EventList = () => {
         getAllEvent()
     }, [userInfo])
 
+    const handleDeleteEvent = async (id: String) => {
+        const check = confirm("Do you want to delete this event?")
+        if (!check || !id) return
+        try {
+            messageApi.open({
+                key: 'updatable',
+                type: 'loading',
+                content: 'Loading...',
+            });
+            const res = await Work.delete(id)
+            if (res.errorCode === 0) {
+                messageApi.open({
+                    key: 'updatable',
+                    type: 'success',
+                    content: res.message,
+                    duration: 2,
+                });
+                setListEvent(listEvent.filter((val) => val.workId?._id === id || val.workId?.id === id))
+            } else {
+                messageApi.open({
+                    key: 'updatable',
+                    type: 'error',
+                    content: res.message,
+                    duration: 2,
+                });
+            }
+        } catch (e) {
+            console.log(e)
+            messageApi.open({
+                key: 'updatable',
+                type: 'error',
+                content: 'Delete failed',
+                duration: 2,
+            });
+        }
+    }
+
     return (
         <div className='event'>
+            {contextHolder}
             <div className="event-top">
                 <h1 className="event-title">
                     Event List
@@ -75,20 +116,28 @@ const EventList = () => {
                                 {val.workId?.markId?.markName}
                             </span>
                             <h4 className="name">
-                                {val.workId?.workTitle}
+                                <Link to={`/detail/${val.workId?._id}`}>{val.workId?.workTitle}</Link>
                             </h4>
                             <div className="box">
                                 <p className="time">
-                                    {handleTime(val.workId?.workDateStart as Date)} -  {handleTime(val.workId?.workDateEnd as Date)}
+                                    {handleTime(val.workId?.workDateStart as String)} -  {handleTime(val.workId?.workDateEnd as String)}
                                 </p>
-                                <div className="box-btn">
-                                    <button className='box-btn__edit'>
-                                        <EditOutlined />
-                                    </button>
-                                    <button className='box-btn__delete'>
-                                        <DeleteOutlined />
-                                    </button>
-                                </div>
+                                {
+                                    (userInfo._id === val.workId?.userId?._id || userInfo.id === val.workId?.userId?._id)
+                                    && (
+                                        <div className="box-btn">
+                                            <button className='box-btn__edit'>
+                                                <EditOutlined />
+                                            </button>
+                                            <button
+                                                className='box-btn__delete'
+                                                onClick={() => handleDeleteEvent((val.workId?._id || val.workId?.id) as String)}
+                                            >
+                                                <DeleteOutlined />
+                                            </button>
+                                        </div>
+                                    )
+                                }
                             </div>
                         </li>
                     ))

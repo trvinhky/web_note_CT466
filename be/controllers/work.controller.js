@@ -96,19 +96,19 @@ const workControllers = {
     }),
     // xóa công việc
     delete: asyncHandler(async (req, res) => {
-        const { id, userId } = req.query
+        const { id } = req.params
 
         // kiểm tra các trường
-        if (!id || !userId) {
+        if (!id) {
             return res.status(400).json({
                 errorCode: 1,
-                message: 'Tất cả các trường là bắt buộc!'
+                message: 'id công việc là bắt buộc!'
             })
         }
 
         try {
             // tìm kiếm và xóa công việc theo id
-            const isDelete = await workModel.findOneAndDelete({ _id: id, userId })
+            const isDelete = await workModel.findOneAndDelete({ _id: id })
 
             // kiểm tra ncông việc đã xóa 
             if (isDelete) {

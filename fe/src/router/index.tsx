@@ -5,6 +5,7 @@ import DefaultLayout from '~/layouts/DefaultLayout'
 import FormLayout from '~/layouts/FormLayout'
 import Admin from '~/pages/admin'
 import CreateEvent from '~/pages/createEvent'
+import Detail from '~/pages/detail'
 import EventList from '~/pages/eventList'
 import Form from '~/pages/form'
 import Home from '~/pages/home'
@@ -23,19 +24,17 @@ const RouteApp = () => {
 
     return (
         <Routes>
-            {isLogin ? (
-                <Route path='/' element={<DefaultLayout />}>
-                    <Route index element={<Home />} />
-                    <Route path='/create-event' element={<CreateEvent />} />
-                    <Route path='/event-list' element={<EventList />} />
-                    <Route path='/info' element={<User />} />
-                    <Route path='/admin' element={<Admin />} />
-                </Route>
-            ) : (
-                <Route path='/form' element={<FormLayout />}>
-                    <Route index element={<Form />} />
-                </Route>
-            )}
+            <Route path='/' element={<DefaultLayout />}>
+                <Route index element={<Home />} />
+                <Route path='/create-event' element={<CreateEvent />} />
+                <Route path='/event-list' element={<EventList />} />
+                <Route path='/info' element={<User />} />
+                <Route path='/admin' element={<Admin />} />
+                <Route path='/detail/:id' element={<Detail />} />
+            </Route>
+            <Route path='/form' element={<FormLayout />}>
+                <Route index element={<Form />} />
+            </Route>
         </Routes>
     )
 }

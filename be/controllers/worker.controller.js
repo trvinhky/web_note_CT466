@@ -48,13 +48,13 @@ const workerControllers = {
     }),
     // cập nhật trạng thái người dùng
     edit: asyncHandler(async (req, res) => {
-        const { id, userId } = req.query
+        const { workId, userId } = req.query
         const { workerStatus } = req.body
 
         const checkValue = (val) => !isNaN(parseInt(val)) && [0, 1, 2].indexOf(+val) !== -1
 
         // kiểm tra các trường
-        if (!id || !userId || !checkValue(workerStatus)) {
+        if (!workId || !userId || !checkValue(workerStatus)) {
             return res.status(400).json({
                 errorCode: 1,
                 message: 'Tất cả các trường là bắt buộc!'
@@ -64,7 +64,7 @@ const workerControllers = {
         try {
             // tìm kiếm và cập nhật trạng thái người dùng
             const worker = await workerModel.findOneAndUpdate(
-                { _id: id, userId },
+                { workId, userId },
                 {
                     $set: {
                         workerStatus
@@ -180,7 +180,7 @@ const workerControllers = {
 
         try {
             // tìm kiếm và lấy tất cả người dùng theo id công việc
-            const workers = await workerModel.find({ workId, workerStatus: 1 }).populate({
+            const workers = await workerModel.find({ workId }).populate({
                 path: 'userId',
                 select: '-userPassword' // Loại bỏ trường userPassword từ bảng user
             })
@@ -362,10 +362,17 @@ const workerControllers = {
 
             // Kiểm tra tất cả công việc đã lấy 
             if (works.length > 0) {
+                let data = []
+                works.forEach((work) => {
+                    if (work.workId) {
+                        data.push(work)
+                    }
+                })
+
                 return res.status(200).json({
                     message: "Lấy tất cả công việc của người dùng trong ngày hôm nay thành công!",
                     errorCode: 0,
-                    data: works
+                    data
                 });
             } else {
                 return res.status(404).json({

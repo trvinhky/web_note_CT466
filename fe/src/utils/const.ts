@@ -1,8 +1,8 @@
 export const DATEFORMATFULL = 'YYYY-MM-DD HH:mm:ss';
 export const TIMEFORMAT = 'HH:mm:ss';
 
-export const handleTime = (time: Date) => {
-    const date = new Date(time);
+export const handleTime = (time: String) => {
+    const date = new Date(time as string);
 
     date.setFullYear(2024, 0, 31); // Set year, month (0-based), and date
     date.setHours(0, 5, 0); // Set hours, minutes, and seconds

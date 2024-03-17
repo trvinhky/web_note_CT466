@@ -22,7 +22,7 @@ const { RangePicker } = DatePicker;
 
 const CreateEvent = () => {
     const [title, setTitle] = useState<string>('')
-    const [mark, setMark] = useState<string>('low')
+    const [mark, setMark] = useState<string>('')
     const [member, setMember] = useState<string>('')
     const [listSearch, setListSearch] = useState<UserData[]>([])
     const [listMember, setListMember] = useState<UserData[]>([])
@@ -50,6 +50,13 @@ const CreateEvent = () => {
 
         getMarkData()
     }, [])
+
+    const resetValue = () => {
+        setListDate([])
+        setListMember([])
+        setTitle('')
+        setMark(listMark[0].markName as string)
+    }
 
     const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setTitle(e.target.value);
@@ -147,13 +154,6 @@ const CreateEvent = () => {
         }
 
         if (isValid && (userInfo._id || userInfo.id)) {
-            console.log({
-                listDate,
-                listMember,
-                title,
-                mark
-            })
-
             try {
                 messageApi.open({
                     key: 'updatable',
@@ -165,22 +165,22 @@ const CreateEvent = () => {
                     workTitle: title,
                     userId: userInfo._id || userInfo.id,
                     markId: mark,
-                    workDateStart: new Date(listDate[0]),
-                    workDateEnd: new Date(listDate[1])
+                    workDateStart: listDate[0],
+                    workDateEnd: listDate[1]
                 })
                 if (res.errorCode === 0) {
+                    listMember.forEach(async (val) => {
+                        if (res.data && !Array.isArray(res.data)) {
+                            await createWorker((val._id || val.id) as String, res.data._id as String)
+                        }
+                    })
                     messageApi.open({
                         key: 'updatable',
                         type: 'success',
                         content: res.message,
                         duration: 2,
                     });
-
-                    listMember.forEach(async (val) => {
-                        if (res.data && !Array.isArray(res.data)) {
-                            await createWorker((val._id || val.id) as String, res.data._id as String)
-                        }
-                    })
+                    resetValue()
                 } else {
                     messageApi.open({
                         key: 'updatable',

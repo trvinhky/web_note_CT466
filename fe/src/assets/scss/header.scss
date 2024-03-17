@@ -46,6 +46,31 @@
                 }
             }
 
+        }
+
+        &__footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 20px;
+
+            .group-btn {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                font-size: 1.4rem;
+
+                &__cancel {
+                    cursor: pointer;
+                    color: red;
+                }
+
+                &__check {
+                    cursor: pointer;
+                    color: #00b894;
+                }
+            }
+
             .time {
                 display: flex;
                 align-items: center;
@@ -55,4 +80,11 @@
             }
         }
     }
+}
+
+.no-notification {
+    font-size: 1rem;
+    font-weight: 700;
+    font-style: italic;
+    color: #aaa;
 }
