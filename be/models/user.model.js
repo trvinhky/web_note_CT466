@@ -11,23 +11,9 @@ const userSchema = mongoose.Schema(
             required: [true, 'Email không tồn tại!'],
             unique: [true, "Email đã tồn tại!"]
         },
-        userAddress: {
-            type: String,
-            required: [true, 'Địa chỉ không tồn tại!'],
-        },
-        userPhone: {
-            type: String,
-            required: [true, 'Số điện thoại không tồn tại!'],
-            unique: [true, "Số điện thoại đã tồn tại!"]
-        },
         userPassword: {
             type: String,
             required: [true, 'Mật khẩu không tồn tại!'],
-        },
-        userRole: {
-            type: String,
-            default: 'user',
-            values: ['user', 'admin']
         },
         Token: {
             type: String

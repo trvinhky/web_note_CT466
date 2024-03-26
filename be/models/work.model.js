@@ -7,6 +7,10 @@ const workSchema = mongoose.Schema(
             type: String,
             required: [true, 'Tiêu đề công việc không tồn tại!'],
         },
+        workDescription: {
+            type: String,
+            required: [true, 'Nội dung công việc không tồn tại!'],
+        },
         workDateStart: {
             type: Date,
             required: [true, 'Thời gian bắt đầu không tồn tại!'],
@@ -15,10 +19,9 @@ const workSchema = mongoose.Schema(
             type: Date,
             required: [true, 'Thời gian kết thúc không tồn tại!'],
         },
-        markId: {
-            type: Schema.Types.ObjectId,
-            required: [true, 'Id nhãn không tồn tại!'],
-            ref: 'mark'
+        workStatus: {
+            type: Boolean,
+            default: false,
         },
         userId: {
             type: Schema.Types.ObjectId,

@@ -4,10 +4,10 @@ const workModel = require('../models/work.model')
 const workControllers = {
     // tạo công việc
     create: asyncHandler(async (req, res) => {
-        const { workTitle, workDateStart, workDateEnd, markId, userId } = req.body
+        const { workTitle, workDateStart, workDateEnd, workDescription, userId } = req.body
 
         // kiểm tra các trường
-        if (!workTitle || !workDateStart || !workDateEnd || !markId || !userId) {
+        if (!workTitle || !workDateStart || !workDateEnd || !workDescription || !userId) {
             return res.status(400).json({
                 errorCode: 1,
                 message: 'Tất cả các trường là bắt buộc!'
@@ -20,7 +20,7 @@ const workControllers = {
                 workDateEnd,
                 workDateStart,
                 workTitle,
-                markId,
+                workDescription,
                 userId
             })
 
@@ -47,11 +47,11 @@ const workControllers = {
     }),
     // chỉnh sửa công việc
     edit: asyncHandler(async (req, res) => {
-        const { id, userId } = req.query
-        const { workTitle, workDateStart, workDateEnd, markId } = req.body
+        const { id } = req.query
+        const { workTitle, workDateStart, workDateEnd, workDescription } = req.body
 
         // kiểm tra các trường
-        if (!workTitle || !workDateStart || !workDateEnd || !markId || !id || !userId) {
+        if (!workTitle || !workDateStart || !workDateEnd || !workDescription || !id) {
             return res.status(400).json({
                 errorCode: 1,
                 message: 'Tất cả các trường là bắt buộc!'
@@ -61,13 +61,59 @@ const workControllers = {
         try {
             // tìm kiếm và cập nhật thông tin công việc
             const work = await workModel.findOneAndUpdate(
-                { _id: id, userId },
+                { _id: id },
                 {
                     $set: {
                         workDateEnd,
                         workDateStart,
                         workTitle,
-                        markId
+                        workDescription
+                    }
+                },
+                { new: true }
+            )
+
+            // kiểm tra cập nhật
+            if (work) {
+                return res.status(201).json({
+                    message: "Cập nhật thông tin công việc thành công!",
+                    data: work,
+                    errorCode: 0
+                })
+            } else {
+                return res.status(404).json({
+                    message: "Cập nhật thông tin công việc thất bại!",
+                    errorCode: 2
+                })
+            }
+        } catch (err) {
+            return res.status(500).json({
+                errorCode: 3,
+                message: "Lỗi server!",
+                error: err.message
+            })
+        }
+    }),
+    // chỉnh sửa trạng thái công việc
+    editStatus: asyncHandler(async (req, res) => {
+        const { id } = req.query
+        const { workStatus } = req.body
+
+        // kiểm tra các trường
+        if (!(typeof workStatus === "boolean") || !id) {
+            return res.status(400).json({
+                errorCode: 1,
+                message: 'Tất cả các trường là bắt buộc!'
+            })
+        }
+
+        try {
+            // tìm kiếm và cập nhật thông tin công việc
+            const work = await workModel.findOneAndUpdate(
+                { _id: id },
+                {
+                    $set: {
+                        workStatus,
                     }
                 },
                 { new: true }
@@ -144,7 +190,7 @@ const workControllers = {
 
         try {
             // lấy thông tin công việc theo id
-            const work = await workModel.findOne({ _id: id }).populate('markId').populate({
+            const work = await workModel.findOne({ _id: id }).populate({
                 path: 'userId',
                 select: '-userPassword' // Loại bỏ trường userPassword từ bảng user
             })
@@ -153,6 +199,165 @@ const workControllers = {
                 return res.status(201).json({
                     errorCode: 0,
                     data: work,
+                    message: "Lấy thông tin công việc thành công!"
+                })
+            } else {
+                return res.status(404).json({
+                    errorCode: 2,
+                    message: "Lấy thông tin công việc thất bại!"
+                })
+            }
+        } catch (err) {
+            return res.status(500).json({
+                errorCode: 3,
+                message: "Lỗi server!",
+                error: err.message
+            })
+        }
+    }),
+    // lấy tất cả công việc
+    getAll: asyncHandler(async (req, res) => {
+        const { userId, status, year, month } = req.query
+
+        // kiểm tra userId
+        if (!userId) {
+            return res.status(400).json({
+                errorCode: 1,
+                message: 'userId là bắt buộc!'
+            })
+        }
+
+        try {
+            // Điều kiện
+            let condition = [];
+            let conditionDate;
+
+            if (!isNaN(parseInt(year))) {
+                let startDate;
+                let endDate;
+                if (!isNaN(parseInt(month))) {
+                    startDate = new Date(year, month - 1, 1);
+                    // Lấy ngày cuối cùng của tháng
+                    endDate = new Date(year, month, 0, 23, 59, 59);
+                } else {
+                    startDate = new Date(year, 0, 1);
+                    endDate = new Date(year, 11, 31, 23, 59, 59);
+                }
+
+                conditionDate = [
+                    { workDateStart: { $gte: startDate } },
+                    { workDateEnd: { $lte: endDate } }
+                ]
+            }
+
+            if (status && typeof JSON.parse(status) === 'boolean') {
+                if (conditionDate) {
+                    condition = {
+                        $and: [
+                            ...conditionDate,
+                            { workStatus: JSON.parse(status) },
+                            userId
+                        ]
+                    };
+                } else {
+                    condition = {
+                        $and: [
+                            { workStatus: JSON.parse(status) },
+                            userId
+                        ]
+                    };
+                }
+            }
+
+            if (condition.length < 1) {
+                condition = { userId };
+            }
+
+            // lấy thông tin công việc theo id
+            const works = await workModel.find(condition).populate({
+                path: 'userId',
+                select: '-userPassword' // Loại bỏ trường userPassword từ bảng user
+            })
+
+            if (works) {
+                return res.status(201).json({
+                    errorCode: 0,
+                    data: works,
+                    message: "Lấy thông tin công việc thành công!"
+                })
+            } else {
+                return res.status(404).json({
+                    errorCode: 2,
+                    message: "Lấy thông tin công việc thất bại!"
+                })
+            }
+        } catch (err) {
+            return res.status(500).json({
+                errorCode: 3,
+                message: "Lỗi server!",
+                error: err.message
+            })
+        }
+    }),
+    // lấy tất cả công việc hiện tại
+    getAllCurrent: asyncHandler(async (req, res) => {
+        const { userId, status } = req.query
+
+        // kiểm tra userId
+        if (!userId) {
+            return res.status(400).json({
+                errorCode: 1,
+                message: 'userId là bắt buộc!'
+            })
+        }
+
+        try {
+            // Điều kiện
+            let condition = [];
+
+            // Tạo giá trị cho ngày bắt đầu và kết thúc của ngày hiện tại
+            const today = new Date();
+            const startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+            const endDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+
+            // Điều kiện
+            let conditionDate = {
+                workDateStart: { $gte: startDate, $lt: endDate }
+            };
+
+            if (status && typeof JSON.parse(status) === 'boolean') {
+                if (conditionDate) {
+                    condition = {
+                        $and: [
+                            ...conditionDate,
+                            { workStatus: JSON.parse(status) },
+                            userId
+                        ]
+                    };
+                } else {
+                    condition = {
+                        $and: [
+                            { workStatus: JSON.parse(status) },
+                            userId
+                        ]
+                    };
+                }
+            }
+
+            if (condition.length < 1) {
+                condition = { userId };
+            }
+
+            // lấy thông tin công việc theo id
+            const works = await workModel.find(condition).populate({
+                path: 'userId',
+                select: '-userPassword' // Loại bỏ trường userPassword từ bảng user
+            })
+
+            if (works) {
+                return res.status(201).json({
+                    errorCode: 0,
+                    data: works,
                     message: "Lấy thông tin công việc thành công!"
                 })
             } else {
