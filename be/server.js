@@ -36,9 +36,7 @@ connectDB()
 // Routes
 const path = (name) => `/api/v1/${name}`
 app.use(path('user'), require('./routes/user.route'))
-app.use(path('mark'), require('./routes/mark.route'))
 app.use(path('work'), require('./routes/work.route'))
-app.use(path('worker'), require('./routes/worker.route'))
 
 app.listen(port, () => {
     console.log(`Server running on port ${port} (http://localhost:${port})`)
