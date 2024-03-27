@@ -68,7 +68,10 @@ const userControllers = {
                 return res.status(201).json({
                     errorCode: 0,
                     data: {
-                        id: user._id
+                        _id: user._id,
+                        userName: user.userName,
+                        userEmail: user.userEmail,
+                        Token: user.Token
                     },
                     message: "Đăng nhập tài khoản thành công!"
                 })
@@ -86,42 +89,6 @@ const userControllers = {
             })
         }
     }),
-    // lấy thông tin người dùng
-    getOne: asyncHandler(async (req, res) => {
-        const { id } = req.params
-
-        // kiểm tra id người dùng
-        if (!id) {
-            return res.status(400).json({
-                errorCode: 1,
-                message: "Không tồn tại id người dùng!"
-            })
-        }
-
-        try {
-            // lấy thông tin người dùng theo id
-            const user = await userModel.findOne({ _id: id }).select('-userPassword')
-
-            if (user) {
-                return res.status(201).json({
-                    errorCode: 0,
-                    data: user,
-                    message: "Lấy thông tin người dùng thành công!"
-                })
-            } else {
-                return res.status(404).json({
-                    errorCode: 2,
-                    message: "Lấy thông tin người dùng thất bại!"
-                })
-            }
-        } catch (err) {
-            return res.status(500).json({
-                errorCode: 3,
-                message: "Lỗi server!",
-                error: err.message
-            })
-        }
-    })
 }
 
 module.exports = userControllers

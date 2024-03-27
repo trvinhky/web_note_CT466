@@ -17,14 +17,6 @@ path: `/user/login`;
 // body: userEmail, userPassword - string
 ```
 
-### **Get Info User**
-
-```ts
-// method: GET
-id: string;
-path: `/user/info/${id}`;
-```
-
 ### Work
 
 ### **Create Work**
