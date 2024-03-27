@@ -1,41 +1,16 @@
 import { ContactsOutlined, FormOutlined, HomeOutlined, SettingOutlined, UnorderedListOutlined, UserOutlined } from "@ant-design/icons";
 import { Row, Col, Avatar } from "antd";
-import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, Outlet } from "react-router-dom";
 import '~/assets/scss/default.scss'
 import Header from "~/components/Header";
 import { userInfoSelector } from "~/store/selectors";
-import { UserData } from "~/types/dataType";
-import User from '~/services/user'
 import { actions } from "~/components/usersSlice";
 
 
 const DefaultLayout = () => {
-    const [user, setUser] = useState<UserData>({})
     const userInfo = useSelector(userInfoSelector)
     const dispatch = useDispatch();
-
-    useEffect(() => {
-        const getUserInfo = async () => {
-            if (userInfo.id) {
-                try {
-                    const res = await User.getInfo(userInfo.id)
-                    if (res.errorCode === 0 && res.data && !Array.isArray(res.data)) {
-                        setUser(res.data)
-                        dispatch(actions.setInfo({
-                            ...res.data,
-                            id: userInfo.id
-                        }))
-                    }
-                } catch (e) {
-                    console.log(e)
-                }
-            }
-        }
-
-        getUserInfo()
-    }, [])
 
     const handleSignOut = () => {
         dispatch(actions.LogOut())
@@ -58,7 +33,7 @@ const DefaultLayout = () => {
                                         <Avatar size={120} icon={<UserOutlined />} />
                                     </div>
                                     <span className="default-avatar__name">
-                                        {user && user.userName}
+                                        {userInfo && userInfo.userName}
                                     </span>
                                     <div className="center">
                                         <button

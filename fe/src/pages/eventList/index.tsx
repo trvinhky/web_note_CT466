@@ -2,18 +2,17 @@ import { DeleteOutlined, EditOutlined } from '@ant-design/icons'
 import './eventList.scss'
 import { Select, message } from 'antd';
 import { useEffect, useState } from 'react';
-import { WorkerInfo } from '~/types/dataType';
-import Worker from '~/services/worker'
 import { userInfoSelector } from '~/store/selectors';
 import { useSelector } from 'react-redux';
 import { handleTime } from '~/utils/const';
 import { Link } from 'react-router-dom';
 import Work from '~/services/work';
+import { WorkInfo } from '~/types/dataType';
 
 const EventList = () => {
     const [messageApi, contextHolder] = message.useMessage();
     const userInfo = useSelector(userInfoSelector)
-    const [listEvent, setListEvent] = useState<WorkerInfo[]>([])
+    const [listEvent, setListEvent] = useState<WorkInfo[]>([])
 
     const handleChangeTime = (value: string) => {
         console.log(`selected ${value}`);
@@ -27,7 +26,9 @@ const EventList = () => {
         const getAllEvent = async () => {
             if (userInfo) {
                 try {
-                    const res = await Worker.getAll({ userId: (userInfo._id || userInfo.id) as String })
+                    const res = await Work.getAll({
+                        userId: userInfo._id as String
+                    })
 
                     if (res.errorCode === 0 && Array.isArray(res.data)) {
                         setListEvent(res.data)
@@ -58,7 +59,7 @@ const EventList = () => {
                     content: res.message,
                     duration: 2,
                 });
-                setListEvent(listEvent.filter((val) => val.workId?._id === id || val.workId?.id === id))
+                setListEvent(listEvent.filter((val) => val._id === id))
             } else {
                 messageApi.open({
                     key: 'updatable',
@@ -110,20 +111,15 @@ const EventList = () => {
                 {
                     listEvent.length > 0 && listEvent.map((val) => (
                         <li className="event-list__item" key={val._id as string}>
-                            <span
-                                className={`mark mark--${val.workId?.markId?.markName?.toLocaleLowerCase()}`}
-                            >
-                                {val.workId?.markId?.markName}
-                            </span>
                             <h4 className="name">
-                                <Link to={`/detail/${val.workId?._id}`}>{val.workId?.workTitle}</Link>
+                                <Link to={`/detail/${val._id}`}>{val.workTitle}</Link>
                             </h4>
                             <div className="box">
                                 <p className="time">
-                                    {handleTime(val.workId?.workDateStart as String)} -  {handleTime(val.workId?.workDateEnd as String)}
+                                    {handleTime(val.workDateStart as String)} -  {handleTime(val.workDateEnd as String)}
                                 </p>
                                 {
-                                    (userInfo._id === val.workId?.userId?._id || userInfo.id === val.workId?.userId?._id)
+                                    (userInfo._id === val.userId?._id)
                                     && (
                                         <div className="box-btn">
                                             <button className='box-btn__edit'>
@@ -131,7 +127,7 @@ const EventList = () => {
                                             </button>
                                             <button
                                                 className='box-btn__delete'
-                                                onClick={() => handleDeleteEvent((val.workId?._id || val.workId?.id) as String)}
+                                                onClick={() => handleDeleteEvent(val._id as String)}
                                             >
                                                 <DeleteOutlined />
                                             </button>

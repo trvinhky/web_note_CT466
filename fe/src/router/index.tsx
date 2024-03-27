@@ -26,11 +26,11 @@ const RouteApp = () => {
         <Routes>
             <Route path='/' element={<DefaultLayout />}>
                 <Route index element={<Home />} />
-                <Route path='/create-event' element={<CreateEvent />} />
+                {/* <Route path='/create-event' element={<CreateEvent />} /> */}
                 <Route path='/event-list' element={<EventList />} />
                 <Route path='/info' element={<User />} />
                 <Route path='/admin' element={<Admin />} />
-                <Route path='/detail/:id' element={<Detail />} />
+                {/* <Route path='/detail/:id' element={<Detail />} /> */}
             </Route>
             <Route path='/form' element={<FormLayout />}>
                 <Route index element={<Form />} />

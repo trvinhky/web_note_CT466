@@ -10,22 +10,6 @@ class User extends NotesAPI {
     public async signIn(data: UserData): Promise<APIType<UserData>> {
         return await this.postAPI('/user/login', data)
     }
-
-    public async getCount(): Promise<APIType<Number>> {
-        return await this.getAPI('/user/count')
-    }
-
-    public async searchAPI(userEmail: String): Promise<APIType<UserData>> {
-        return await this.getAPI(`/user/search/${userEmail}`)
-    }
-
-    public async getInfo(id: String): Promise<APIType<UserData>> {
-        return await this.getAPI(`/user/info/${id}`)
-    }
-
-    public async update(id: String, data: UserData): Promise<APIType<UserData>> {
-        return await this.putAPI(`/user/${id}`, data)
-    }
 }
 
 export default new User()

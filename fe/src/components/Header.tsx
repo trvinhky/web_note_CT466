@@ -2,34 +2,31 @@ import '~/assets/scss/header.scss'
 import Logo from './Logo'
 import { useEffect, useState } from 'react';
 import { Drawer, message } from 'antd';
-import { BellFilled, CheckCircleOutlined, CloseCircleOutlined, HistoryOutlined } from '@ant-design/icons';
+import { BellFilled, CheckCircleOutlined, HistoryOutlined } from '@ant-design/icons';
 import { userInfoSelector } from '~/store/selectors';
 import { useSelector } from 'react-redux';
-import { WorkerData, WorkerInfo } from '~/types/dataType';
-import Worker from '~/services/worker'
-import { APIType } from '~/types/apiType';
+import { WorkInfo } from '~/types/dataType';
+import Work from '~/services/work';
 
 const Header = () => {
     const [open, setOpen] = useState(false);
     const userInfo = useSelector(userInfoSelector)
-    const [listEvent, setListEvent] = useState<WorkerInfo[]>([])
-    const [notification, setNotification] = useState<WorkerInfo[]>([])
+    const [listEvent, setListEvent] = useState<WorkInfo[]>([])
     const [messageApi, contextHolder] = message.useMessage();
 
     useEffect(() => {
         const getAllEvent = async () => {
-            if (userInfo && (userInfo._id || userInfo.id)) {
+            if (userInfo && userInfo._id) {
                 try {
-                    const res = await Worker.getAllCurrent((userInfo._id || userInfo.id) as String)
-                    const noti = await Worker.getAllByStatus((userInfo._id || userInfo.id) as String, 0)
+                    const res = await Work.getCurrent({
+                        userId: userInfo._id as String,
+                        status: false
+                    })
 
                     if (res.errorCode === 0 && Array.isArray(res.data)) {
                         setListEvent(res.data)
                     }
 
-                    if (noti.errorCode === 0 && Array.isArray(noti.data)) {
-                        setNotification(noti.data)
-                    }
                 } catch (e) {
                     console.log(e)
                 }
@@ -47,9 +44,11 @@ const Header = () => {
         setOpen(false);
     };
 
-    const callAPI = async (fn: Promise<APIType<WorkerData>>) => {
+    const updateStatusWork = async (id: String) => {
         try {
-            const res = await fn
+            const res = await Work.update(id, {
+                workStatus: true
+            })
             if (res.errorCode === 0) {
                 messageApi.open({
                     key: 'updatable',
@@ -77,24 +76,15 @@ const Header = () => {
         }
     }
 
-    const fillerElementNotification = (workId: String) => {
-        setNotification(
-            notification.filter((val) => val.workId?._id !== workId && (val.userId !== userInfo._id || val.userId !== userInfo.id))
+    const fillerElementListEvent = (workId: String) => {
+        setListEvent(
+            listEvent.filter((val) => val._id !== workId)
         )
     }
 
-    const handleCancelEvent = async (id: String) => {
-        await callAPI(Worker.update((userInfo._id || userInfo.id) as String, id, {
-            workerStatus: 2
-        }))
-        fillerElementNotification(id)
-    }
-
     const handleCheckEvent = async (id: String) => {
-        await callAPI(Worker.update((userInfo._id || userInfo.id) as String, id, {
-            workerStatus: 1
-        }))
-        fillerElementNotification(id)
+        await updateStatusWork(id)
+        fillerElementListEvent(id)
     }
 
     return (
@@ -111,39 +101,15 @@ const Header = () => {
                     {
                         listEvent.length > 0 && listEvent.map((val) => (
                             <li className="header-list__item" key={val._id as string}>
-                                <h5>{val.workId?.workTitle}</h5>
-                                <span
-                                    className={`mark mark--${val.workId?.markId?.markName?.toLocaleLowerCase()}`}
-                                >
-                                    {val.workId?.markId?.markName}
-                                </span>
-                                <span className="time"><HistoryOutlined />7 hours left</span>
-                            </li>
-                        ))
-                    }
-                    {
-                        notification.length > 0 && notification.map((val) => (
-                            <li className="header-list__item" key={val._id as string}>
-                                <h5>{val.workId?.workTitle}</h5>
-                                <span
-                                    className={`mark mark--${val.workId?.markId?.markName?.toLocaleLowerCase()}`}
-                                >
-                                    {val.workId?.markId?.markName}
-                                </span>
+                                <h5>{val.workTitle}</h5>
                                 <div className="header-list__footer">
                                     <div className="group-btn">
                                         <span
-                                            className="group-btn__cancel"
-                                            onClick={() => handleCancelEvent((val.workId?._id || val.workId?.id) as String)}
-                                        >
-                                            <CloseCircleOutlined />
-                                        </span>
-                                        <div
                                             className="group-btn__check"
-                                            onClick={() => handleCheckEvent((val.workId?._id || val.workId?.id) as String)}
+                                            onClick={() => handleCheckEvent((val._id as String))}
                                         >
                                             <CheckCircleOutlined />
-                                        </div>
+                                        </span>
                                     </div>
                                     <span className="time"><HistoryOutlined />7 hours left</span>
                                 </div>
@@ -152,7 +118,7 @@ const Header = () => {
                     }
                 </ul>
                 {
-                    notification.length <= 0 && listEvent.length <= 0 &&
+                    listEvent.length <= 0 &&
                     <span className="no-notification">
                         no notification
                     </span>

@@ -1,12 +1,12 @@
 import './home.scss'
 import type { Dayjs } from 'dayjs';
 import { Badge, Calendar } from 'antd';
-import { WorkerInfo } from '~/types/dataType';
+import { WorkInfo } from '~/types/dataType';
 import { useSelector } from 'react-redux';
 import { userInfoSelector } from '~/store/selectors';
 import { useEffect, useMemo, useState } from 'react';
 import dayjs from 'dayjs';
-import Worker from '~/services/worker';
+import Work from '~/services/work';
 
 type typeDate = 'warning' | 'success' | 'error'
 
@@ -19,27 +19,14 @@ type eventDataType = {
 
 const Home = () => {
     const userInfo = useSelector(userInfoSelector)
-    const [listEvent, setListEvent] = useState<WorkerInfo[]>([])
-
-    const getType = (type: String): typeDate => {
-        switch (type.toLowerCase()) {
-            case 'normal':
-                return 'warning'
-            case 'low':
-                return 'success'
-            case 'high':
-                return 'error'
-            default:
-                return 'success'
-        }
-    }
+    const [listEvent, setListEvent] = useState<WorkInfo[]>([])
 
     useEffect(() => {
         const getAllEvent = async () => {
             if (userInfo) {
                 try {
-                    const res = await Worker.getAll({
-                        userId: (userInfo._id || userInfo.id) as String,
+                    const res = await Work.getAll({
+                        userId: userInfo._id as String,
                         year: new Date().getFullYear(),
                         month: new Date().getMonth() + 1
                     })
@@ -56,12 +43,12 @@ const Home = () => {
         getAllEvent()
     }, [userInfo])
 
-    const getData = (data: WorkerInfo[]): eventDataType[] => {
+    const getData = (data: WorkInfo[]): eventDataType[] => {
         return data.map((val): eventDataType => ({
-            start: val.workId?.workDateStart as String,
-            end: val.workId?.workDateEnd as String,
-            type: getType(val.workId?.markId?.markName as String),
-            content: val.workId?.workTitle as String
+            start: val.workDateStart as String,
+            end: val.workDateEnd as String,
+            type: val.workStatus ? 'success' : 'warning',
+            content: val.workTitle as String
         }))
     }
 
