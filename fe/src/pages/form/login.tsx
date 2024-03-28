@@ -7,12 +7,17 @@ import { message } from 'antd';
 import { useDispatch } from 'react-redux';
 import { actions } from '~/components/usersSlice';
 import { useNavigate } from 'react-router-dom';
+import { LockOutlined, MailOutlined } from '@ant-design/icons';
+import signInImage from '~/assets/images/signin-image.jpg'
+import { ErrorLabel } from '~/types/global';
+import { isValidEmail, isValidPassword } from '~/utils/validation';
 
 const Login = ({ ToggleLogin }: { ToggleLogin: ToggleLoginFunction }) => {
     const dispatch = useDispatch();
     const [messageApi, contextHolder] = message.useMessage();
     const [email, setEmail] = useState<string>('');
     const [password, setPassword] = useState<string>('');
+    const [error, setError] = useState<ErrorLabel>({})
     const navigate = useNavigate();
 
     const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -30,6 +35,20 @@ const Login = ({ ToggleLogin }: { ToggleLogin: ToggleLoginFunction }) => {
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        let isFormValid = true
+
+        if (!isValidEmail(email)) {
+            setError((prev) => ({ ...prev, email: 'Invalid email' as String }))
+            isFormValid = false
+        }
+
+        if (!isValidPassword(password)) {
+            setError((prev) => ({ ...prev, password: 'Invalid password' as String }))
+            isFormValid = false
+        }
+
+        if (!isFormValid) return
+
         try {
             messageApi.open({
                 key: 'updatable',
@@ -60,6 +79,8 @@ const Login = ({ ToggleLogin }: { ToggleLogin: ToggleLoginFunction }) => {
                     duration: 2,
                 });
             }
+
+            setError({})
         } catch (e) {
             console.log(e)
             messageApi.open({
@@ -72,33 +93,60 @@ const Login = ({ ToggleLogin }: { ToggleLogin: ToggleLoginFunction }) => {
     };
 
     return (
-        <form className='form' onSubmit={handleSubmit}>
+        <div className="form">
             {contextHolder}
-            <h2 className="form-title">Sign In</h2>
-            <input
-                type="email"
-                className="form-input"
-                required
-                placeholder='Email'
-                value={email}
-                onChange={handleEmailChange}
-            />
-            <input
-                type="password"
-                className="form-input"
-                required
-                placeholder='Password'
-                value={password}
-                onChange={handlePasswordChange}
-            />
-            <div className="center">
-                <button type="submit">Sign In</button>
+            <div className="form-right">
+                <img src={signInImage} alt="" />
+                <span onClick={ToggleLogin}>Create an account</span>
             </div>
-            <div className="form-group">
-                <span className="form-group__text">Forgot your password?</span>
-                <span onClick={ToggleLogin} className='form-group__link'>Sign Up</span>
-            </div>
-        </form>
+            <form className='form-content' onSubmit={handleSubmit}>
+                <h2 className="form-title">Sign In</h2>
+                <div className="form-group">
+                    <div className="form-group__input">
+                        <label htmlFor='email' className='form-icon'>
+                            <MailOutlined />
+                        </label>
+                        <input
+                            type="email"
+                            placeholder='Your email'
+                            id='email'
+                            value={email}
+                            onChange={handleEmailChange}
+                        />
+                    </div>
+                    {error?.email &&
+                        <small className="form-group__error">
+                            {error.email}
+                        </small>
+                    }
+                </div>
+                <div className="form-group">
+                    <div className="form-group__input">
+                        <label htmlFor='password' className='form-icon'>
+                            <LockOutlined />
+                        </label>
+                        <input
+                            type="password"
+                            placeholder='Password'
+                            id='password'
+                            value={password}
+                            onChange={handlePasswordChange}
+                        />
+                    </div>
+                    {error?.password &&
+                        <small className="form-group__error">
+                            {error.password}
+                        </small>
+                    }
+                </div>
+                <div className="form-check">
+                    <input type="checkbox" name="check" checked />
+                    <label htmlFor="check">Remember me</label>
+                </div>
+
+                <button type="submit" className='form-btn'>Log In</button>
+            </form>
+        </div>
     );
 }
 
