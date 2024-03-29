@@ -18,6 +18,7 @@ const workSchema = mongoose.Schema(
         workDateEnd: {
             type: Date,
             required: [true, 'Thời gian kết thúc không tồn tại!'],
+            primaryKey: true
         },
         workStatus: {
             type: Boolean,
@@ -26,7 +27,8 @@ const workSchema = mongoose.Schema(
         userId: {
             type: Schema.Types.ObjectId,
             required: [true, 'Id người dùng không tồn tại!'],
-            ref: 'user'
+            ref: 'user',
+            primaryKey: true
         }
     }
 );
