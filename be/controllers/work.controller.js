@@ -4,7 +4,7 @@ const workModel = require('../models/work.model')
 const workControllers = {
     // tạo công việc
     create: asyncHandler(async (req, res) => {
-        const { workTitle, workDateStart, workDateEnd, workDescription, userId } = req.body
+        const { workTitle, workDateStart, workDateEnd, workDescription, userId, workStatus } = req.body
 
         // kiểm tra các trường
         if (!workTitle || !workDateStart || !workDateEnd || !workDescription || !userId) {
@@ -14,6 +14,9 @@ const workControllers = {
             })
         }
 
+        let status = workStatus
+        if (typeof status !== 'boolean') status = false
+
         try {
             // thêm công việc mới
             const work = await workModel.create({
@@ -21,7 +24,8 @@ const workControllers = {
                 workDateStart,
                 workTitle,
                 workDescription,
-                userId
+                userId,
+                workStatus: status
             })
 
             // kiểm tra công việc vừa thêm
@@ -29,7 +33,6 @@ const workControllers = {
                 return res.status(200).json({
                     message: "Thêm công việc mới thành công!",
                     errorCode: 0,
-                    data: work
                 })
             } else {
                 return res.status(404).json({
@@ -144,7 +147,7 @@ const workControllers = {
     delete: asyncHandler(async (req, res) => {
         const { id } = req.params
 
-        // kiểm tra các trường
+        // kiểm tra id công việc
         if (!id) {
             return res.status(400).json({
                 errorCode: 1,
@@ -178,19 +181,19 @@ const workControllers = {
     }),
     // lấy thông tin công việc
     getOne: asyncHandler(async (req, res) => {
-        const { id } = req.params
+        const { userId, workDateEnd } = req.query
 
-        // kiểm tra id công việc
-        if (!id) {
+        // kiểm tra các trường
+        if (!userId || !workDateEnd) {
             return res.status(400).json({
                 errorCode: 1,
-                message: 'id công việc là bắt buộc!'
+                message: 'Tất cả các trường là bắt buộc!'
             })
         }
 
         try {
             // lấy thông tin công việc theo id
-            const work = await workModel.findOne({ _id: id }).populate({
+            const work = await workModel.findOne({ userId, workDateEnd }).populate({
                 path: 'userId',
                 select: '-userPassword' // Loại bỏ trường userPassword từ bảng user
             })

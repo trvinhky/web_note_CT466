@@ -24,7 +24,7 @@ path: `/user/login`;
 ```ts
 // method: POST
 path: `/work/create`;
-// body: (workTitle, workDescription, userId) - string, (workDateStart, workDateEnd) - Date
+// body: (workTitle, workDescription, userId) - string, (workDateStart, workDateEnd) - Date, workStatus - boolean (option)
 ```
 
 ### **Update Work**
@@ -57,8 +57,9 @@ path: `/work/delete/${id}`;
 
 ```ts
 // method: GET
-id: string;
-path: `/work/info/${id}`;
+userId: string;
+workDateEnd: Date;
+path: `/work/info?userId=${userId}&workDateEnd=${workDateEnd}`;
 ```
 
 ### **Get All Work**
