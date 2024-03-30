@@ -1,4 +1,9 @@
+import dayjs from "dayjs";
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+
 export const DATEFORMATFULL = 'YYYY-MM-DD HH:mm:ss';
+export const DATEFORMAT = 'YYYY-MM-DD';
 export const TIMEFORMAT = 'HH:mm:ss';
 
 export const handleTime = (time: String) => {
@@ -14,3 +19,8 @@ export const handleTime = (time: String) => {
         ('0' + date.getMinutes()).slice(-2) + ':' +
         ('0' + date.getSeconds()).slice(-2);
 }
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
+export const convertDate = (time: String, format: String) => dayjs.utc(time as string).local().format(format as string)

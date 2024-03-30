@@ -5,7 +5,7 @@ import User from '~/services/user'
 import { ToggleLoginFunction } from './index';
 import { message } from 'antd';
 import { useDispatch } from 'react-redux';
-import { actions } from '~/components/usersSlice';
+import { actions } from '~/store/usersSlice';
 import { useNavigate } from 'react-router-dom';
 import { LockOutlined, MailOutlined } from '@ant-design/icons';
 import signInImage from '~/assets/images/signin-image.jpg'

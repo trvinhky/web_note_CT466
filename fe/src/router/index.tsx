@@ -6,10 +6,10 @@ import FormLayout from '~/layouts/FormLayout'
 import Admin from '~/pages/admin'
 import CreateEvent from '~/pages/createEvent'
 import Detail from '~/pages/detail'
+import EditEvent from '~/pages/editEvent'
 import EventList from '~/pages/eventList'
 import Form from '~/pages/form'
 import Home from '~/pages/home'
-import User from '~/pages/user'
 import { userIsLoginSelector } from '~/store/selectors'
 
 const RouteApp = () => {
@@ -26,9 +26,9 @@ const RouteApp = () => {
         <Routes>
             <Route path='/' element={<DefaultLayout />}>
                 <Route index element={<Home />} />
-                {/* <Route path='/create-event' element={<CreateEvent />} /> */}
+                <Route path='/create-event' element={<CreateEvent />} />
                 <Route path='/event-list' element={<EventList />} />
-                <Route path='/info' element={<User />} />
+                <Route path='/edit' element={<EditEvent />} />
                 <Route path='/admin' element={<Admin />} />
                 {/* <Route path='/detail/:id' element={<Detail />} /> */}
             </Route>

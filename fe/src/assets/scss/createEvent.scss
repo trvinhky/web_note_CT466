@@ -1,8 +1,12 @@
 .create-form {
+    max-width: 50vw;
+    width: 100%;
+
     .title {
         text-align: center;
         text-transform: capitalize;
         font-size: 2rem;
+        margin-bottom: 15px;
     }
 
     .group-input {

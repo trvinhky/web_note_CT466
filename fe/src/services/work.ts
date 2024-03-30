@@ -22,8 +22,8 @@ class Work extends NotesAPI {
         return await this.deleteAPI(`/work/delete/${id}`)
     }
 
-    public async getInfo(id: String): Promise<APIType<WorkInfo>> {
-        return await this.getAPI(`/work/info/${id}`)
+    public async getInfo(userId: String, workDateEnd: String): Promise<APIType<WorkInfo>> {
+        return await this.getAPI(`/work/info?userId=${userId}&workDateEnd=${workDateEnd}`)
     }
 
     public async getAll(query: QueryValue): Promise<APIType<WorkInfo>> {

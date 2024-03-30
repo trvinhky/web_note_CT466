@@ -1,24 +1,48 @@
 import { DeleteOutlined, EditOutlined } from '@ant-design/icons'
 import './eventList.scss'
-import { Select, message } from 'antd';
+import { Select, Typography, message } from 'antd';
 import { useEffect, useState } from 'react';
 import { userInfoSelector } from '~/store/selectors';
 import { useSelector } from 'react-redux';
-import { handleTime } from '~/utils/const';
-import { Link } from 'react-router-dom';
+import { convertDate, DATEFORMATFULL } from '~/utils/const';
+import { Link, useNavigate } from 'react-router-dom';
 import Work from '~/services/work';
 import { WorkInfo } from '~/types/dataType';
 
+const { Paragraph } = Typography;
+
 const EventList = () => {
+    const navigate = useNavigate();
     const [messageApi, contextHolder] = message.useMessage();
     const userInfo = useSelector(userInfoSelector)
     const [listEvent, setListEvent] = useState<WorkInfo[]>([])
 
-    const handleChangeTime = (value: string) => {
+    const months = [
+        { value: 1, label: 'January' },
+        { value: 2, label: 'February' },
+        { value: 3, label: 'March' },
+        { value: 4, label: 'April' },
+        { value: 5, label: 'May' },
+        { value: 6, label: 'June' },
+        { value: 7, label: 'July' },
+        { value: 8, label: 'August' },
+        { value: 9, label: 'September' },
+        { value: 10, label: 'October' },
+        { value: 11, label: 'November' },
+        { value: 12, label: 'December' }
+    ];
+
+    const years = Array.from({ length: 30 }, (_, i) => ({ value: 1900 + i, label: (1900 + i).toString() }));
+
+    const handleChangeMonth = (value: Number) => {
         console.log(`selected ${value}`);
     };
 
-    const handleChangeType = (value: string) => {
+    const handleChangeYear = (value: Number) => {
+        console.log(`selected ${value}`);
+    };
+
+    const handleChangeStatus = (value: boolean) => {
         console.log(`selected ${value}`);
     };
 
@@ -79,6 +103,10 @@ const EventList = () => {
         }
     }
 
+    const handleEdit = (userId: String, workDateEnd: String) => {
+        navigate(`/edit?userId=${userId}&workDateEnd=${workDateEnd}`)
+    }
+
     return (
         <div className='event'>
             {contextHolder}
@@ -88,21 +116,24 @@ const EventList = () => {
                 </h1>
                 <div className="event-group">
                     <Select
-                        defaultValue="month"
+                        defaultValue={1}
                         style={{ width: 120 }}
-                        onChange={handleChangeTime}
-                        options={[
-                            { value: 'month', label: 'month' },
-                            { value: 'year', label: 'year' },
-                        ]}
+                        onChange={handleChangeMonth}
+                        options={months}
                     />
                     <Select
-                        defaultValue="member"
+                        defaultValue={1900}
                         style={{ width: 120 }}
-                        onChange={handleChangeType}
+                        onChange={handleChangeYear}
+                        options={years}
+                    />
+                    <Select
+                        defaultValue={false}
+                        style={{ width: 120 }}
+                        onChange={handleChangeStatus}
                         options={[
-                            { value: 'member', label: 'member' },
-                            { value: 'author', label: 'author' },
+                            { value: false, label: 'Doing' },
+                            { value: true, label: 'Complete' },
                         ]}
                     />
                 </div>
@@ -114,15 +145,21 @@ const EventList = () => {
                             <h4 className="name">
                                 <Link to={`/detail/${val._id}`}>{val.workTitle}</Link>
                             </h4>
+                            <Paragraph ellipsis={{ rows: 2, expandable: false }}>
+                                {val.workDescription}
+                            </Paragraph>
                             <div className="box">
                                 <p className="time">
-                                    {handleTime(val.workDateStart as String)} -  {handleTime(val.workDateEnd as String)}
+                                    {convertDate(val.workDateStart as String, DATEFORMATFULL)} -  {convertDate(val.workDateEnd as String, DATEFORMATFULL)}
                                 </p>
                                 {
                                     (userInfo._id === val.userId?._id)
                                     && (
                                         <div className="box-btn">
-                                            <button className='box-btn__edit'>
+                                            <button
+                                                className='box-btn__edit'
+                                                onClick={() => handleEdit(val.userId?._id as String, val.workDateEnd as String)}
+                                            >
                                                 <EditOutlined />
                                             </button>
                                             <button

@@ -1,12 +1,13 @@
 import './home.scss'
 import type { Dayjs } from 'dayjs';
-import { Badge, Calendar } from 'antd';
+import { Badge, Calendar, Modal } from 'antd';
 import { WorkInfo } from '~/types/dataType';
 import { useSelector } from 'react-redux';
 import { userInfoSelector } from '~/store/selectors';
 import { useEffect, useMemo, useState } from 'react';
 import dayjs from 'dayjs';
 import Work from '~/services/work';
+import EventForm from '~/components/EventForm';
 
 type typeDate = 'warning' | 'success' | 'error'
 
@@ -20,6 +21,8 @@ type eventDataType = {
 const Home = () => {
     const userInfo = useSelector(userInfoSelector)
     const [listEvent, setListEvent] = useState<WorkInfo[]>([])
+    const [dateSelect, setDateSelect] = useState<String>('')
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     useEffect(() => {
         const getAllEvent = async () => {
@@ -54,38 +57,18 @@ const Home = () => {
 
     const getListData = (value: Dayjs) => {
         const eventData = getData(listEvent);
-        const startDate = value.startOf('day');
-        const endDate = value.endOf('day');
+        const currentDate = value.startOf('day');
 
         const listData = eventData.filter(event => {
-            const eventStartDate = dayjs(event.start as string);
-            const eventEndDate = dayjs(event.end as string);
+            const eventEndDate = dayjs(event.end as string).startOf('day');
 
-            // Chỉ lấy các sự kiện nằm trong khoảng thời gian mong muốn
-            return eventStartDate.isSame(startDate, 'day') || (eventStartDate.isBefore(endDate, 'day') && eventEndDate.isAfter(startDate, 'day'));
+            // Chỉ lấy các sự kiện có ngày kết thúc trùng với ngày hiện tại
+            return eventEndDate.isSame(currentDate, 'day');
         });
 
         return listData || [];
     };
 
-
-    const getMonthData = (value: Dayjs) => {
-        if (value.month() === 8) {
-            return 1394;
-        }
-    };
-
-    const monthCellRender = useMemo(() => {
-        return (value: Dayjs) => {
-            const num = getMonthData(value);
-            return num ? (
-                <div className="notes-month">
-                    <section>{num}</section>
-                    <span>Backlog number</span>
-                </div>
-            ) : null;
-        };
-    }, []);
 
     const dateCellRender = useMemo(() => {
         return (value: Dayjs) => {
@@ -106,14 +89,52 @@ const Home = () => {
     const cellRender = useMemo(() => {
         return (current: Dayjs, info: { type: string }) => {
             if (info.type === 'date') return dateCellRender(current);
-            if (info.type === 'month') return monthCellRender(current);
             return null; // Trường hợp mặc định
         };
-    }, [dateCellRender, monthCellRender]);
+    }, [dateCellRender]);
+
+    const handleSelect = (value: Dayjs) => {
+        const listData = getListData(value);
+        if (listData.length > 0) {
+            listData.forEach(event => {
+                const startTime = dayjs(event.start as string).format('HH:mm');
+                const endTime = dayjs(event.end as string).format('HH:mm');
+                console.log('Start time:', startTime);
+                console.log('End time:', endTime);
+                // Thực hiện các thao tác cần thiết với thời gian (time)
+            });
+        } else {
+            const select = value.format('YYYY-MM-DD')
+            if (new Date(select).getTime() < new Date().getTime()) {
+                return
+            }
+            setDateSelect(select)
+            setIsModalOpen(true);
+        }
+    };
+
+    const handleOk = () => {
+        setIsModalOpen(false);
+    };
+
+    const handleCancel = () => {
+        setIsModalOpen(false);
+    };
 
     return (
         <div className='home'>
-            <Calendar cellRender={cellRender} />
+            <Calendar
+                cellRender={cellRender}
+                onSelect={handleSelect}
+            />
+            <Modal
+                title="Create New Event"
+                open={isModalOpen}
+                onOk={handleOk}
+                onCancel={handleCancel}
+            >
+                <EventForm isModal={true} data={{ workDateStart: dateSelect }} />
+            </Modal>
         </div>
     )
 }

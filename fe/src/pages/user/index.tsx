@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { userInfoSelector } from '~/store/selectors';
 import { message } from 'antd';
 import UserService from '~/services/user'
-import { actions } from '~/components/usersSlice';
+import { actions } from '~/store/usersSlice';
 
 const User = () => {
     const [messageApi, contextHolder] = message.useMessage();

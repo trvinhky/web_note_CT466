@@ -1,18 +1,23 @@
 import '~/assets/scss/header.scss'
 import Logo from './Logo'
 import { useEffect, useState } from 'react';
-import { Drawer, message } from 'antd';
-import { BellFilled, CheckCircleOutlined, HistoryOutlined } from '@ant-design/icons';
+import { Drawer, message, Typography } from 'antd';
+import { BarsOutlined, BellFilled, CheckCircleOutlined, FormOutlined, HistoryOutlined, HomeOutlined, InfoCircleOutlined, LogoutOutlined } from '@ant-design/icons';
 import { userInfoSelector } from '~/store/selectors';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { WorkInfo } from '~/types/dataType';
 import Work from '~/services/work';
+import { Link } from 'react-router-dom';
+import { actions } from '~/store/usersSlice';
+
+const { Paragraph } = Typography;
 
 const Header = () => {
     const [open, setOpen] = useState(false);
     const userInfo = useSelector(userInfoSelector)
     const [listEvent, setListEvent] = useState<WorkInfo[]>([])
     const [messageApi, contextHolder] = message.useMessage();
+    const dispatch = useDispatch();
 
     useEffect(() => {
         const getAllEvent = async () => {
@@ -35,6 +40,10 @@ const Header = () => {
 
         getAllEvent()
     }, [])
+
+    const handleSignOut = () => {
+        dispatch(actions.LogOut())
+    }
 
     const showDrawer = () => {
         setOpen(true);
@@ -93,15 +102,32 @@ const Header = () => {
             <div className="header-logo">
                 <Logo />
             </div>
-            <span className='header-report' onClick={showDrawer}>
-                <BellFilled style={{ fontSize: '1.4rem' }} />
-            </span>
+            <nav className="header-nav">
+                <Link to='/' className="header-nav__link">
+                    <HomeOutlined /> Home
+                </Link>
+                <Link to='/event-list' className="header-nav__link">
+                    <BarsOutlined /> List
+                </Link>
+                <Link to='/create-event' className="header-nav__link">
+                    <FormOutlined /> Create
+                </Link>
+                <span className="header-nav__logout" onClick={handleSignOut}>
+                    Logout <LogoutOutlined />
+                </span>
+                <span className='header-nav__report' onClick={showDrawer}>
+                    <BellFilled style={{ fontSize: '1.4rem' }} />
+                </span>
+            </nav>
             <Drawer title="Notification" onClose={onClose} open={open}>
                 <ul className="header-list">
                     {
                         listEvent.length > 0 && listEvent.map((val) => (
                             <li className="header-list__item" key={val._id as string}>
                                 <h5>{val.workTitle}</h5>
+                                <Paragraph ellipsis={{ rows: 2, expandable: false }}>
+                                    {val.workDescription}
+                                </Paragraph>
                                 <div className="header-list__footer">
                                     <div className="group-btn">
                                         <span
@@ -110,6 +136,7 @@ const Header = () => {
                                         >
                                             <CheckCircleOutlined />
                                         </span>
+                                        <Link to='/' className='group-btn__info'><InfoCircleOutlined /></Link>
                                     </div>
                                     <span className="time"><HistoryOutlined />7 hours left</span>
                                 </div>
