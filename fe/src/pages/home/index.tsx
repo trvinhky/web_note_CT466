@@ -8,6 +8,8 @@ import { useEffect, useMemo, useState } from 'react';
 import dayjs from 'dayjs';
 import Work from '~/services/work';
 import EventForm from '~/components/EventForm';
+import { useLoadingContext } from '~/utils/loadingContext';
+import { useNavigate } from 'react-router-dom';
 
 type typeDate = 'warning' | 'success' | 'error'
 
@@ -23,9 +25,14 @@ const Home = () => {
     const [listEvent, setListEvent] = useState<WorkInfo[]>([])
     const [dateSelect, setDateSelect] = useState<String>('')
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const { setIsLoading } = useLoadingContext();
+    const navigate = useNavigate();
 
     useEffect(() => {
-        const getAllEvent = async () => {
+        document.title = 'Home';
+
+        (async () => {
+            setIsLoading(true)
             if (userInfo) {
                 try {
                     const res = await Work.getAll({
@@ -41,10 +48,10 @@ const Home = () => {
                     console.log(e)
                 }
             }
-        }
+            setIsLoading(false)
+        })()
 
-        getAllEvent()
-    }, [userInfo])
+    }, [isModalOpen])
 
     const getData = (data: WorkInfo[]): eventDataType[] => {
         return data.map((val): eventDataType => ({
@@ -96,13 +103,7 @@ const Home = () => {
     const handleSelect = (value: Dayjs) => {
         const listData = getListData(value);
         if (listData.length > 0) {
-            listData.forEach(event => {
-                const startTime = dayjs(event.start as string).format('HH:mm');
-                const endTime = dayjs(event.end as string).format('HH:mm');
-                console.log('Start time:', startTime);
-                console.log('End time:', endTime);
-                // Thực hiện các thao tác cần thiết với thời gian (time)
-            });
+            navigate(`/detail?userId=${userInfo._id}&workDateEnd=${listData[0].end}`)
         } else {
             const select = value.format('YYYY-MM-DD')
             if (new Date(select).getTime() < new Date().getTime()) {
@@ -111,10 +112,6 @@ const Home = () => {
             setDateSelect(select)
             setIsModalOpen(true);
         }
-    };
-
-    const handleOk = () => {
-        setIsModalOpen(false);
     };
 
     const handleCancel = () => {
@@ -130,10 +127,11 @@ const Home = () => {
             <Modal
                 title="Create New Event"
                 open={isModalOpen}
-                onOk={handleOk}
+                footer={null}
+                maskClosable={true}
                 onCancel={handleCancel}
             >
-                <EventForm isModal={true} data={{ workDateStart: dateSelect }} />
+                <EventForm isModal={true} data={{ workDateStart: dateSelect }} setIsModalOpen={setIsModalOpen} />
             </Modal>
         </div>
     )

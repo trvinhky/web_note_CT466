@@ -9,6 +9,7 @@ import { WorkInfo } from '~/types/dataType';
 import Work from '~/services/work';
 import { Link } from 'react-router-dom';
 import { actions } from '~/store/usersSlice';
+import { useLoadingContext } from '~/utils/loadingContext';
 
 const { Paragraph } = Typography;
 
@@ -18,9 +19,11 @@ const Header = () => {
     const [listEvent, setListEvent] = useState<WorkInfo[]>([])
     const [messageApi, contextHolder] = message.useMessage();
     const dispatch = useDispatch();
+    const { setIsLoading } = useLoadingContext();
 
     useEffect(() => {
-        const getAllEvent = async () => {
+        (async () => {
+            setIsLoading(true)
             if (userInfo && userInfo._id) {
                 try {
                     const res = await Work.getCurrent({
@@ -36,9 +39,9 @@ const Header = () => {
                     console.log(e)
                 }
             }
-        }
+            setIsLoading(false)
+        })()
 
-        getAllEvent()
     }, [])
 
     const handleSignOut = () => {
@@ -136,7 +139,7 @@ const Header = () => {
                                         >
                                             <CheckCircleOutlined />
                                         </span>
-                                        <Link to='/' className='group-btn__info'><InfoCircleOutlined /></Link>
+                                        <Link to={`/detail?userId=${val.userId?._id}&workDateEnd=${val.workDateEnd}`} className='group-btn__info'><InfoCircleOutlined /></Link>
                                     </div>
                                     <span className="time"><HistoryOutlined />7 hours left</span>
                                 </div>

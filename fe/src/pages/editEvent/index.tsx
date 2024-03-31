@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import EventForm from "~/components/EventForm"
 import Work from "~/services/work";
 import { WorkData } from "~/types/dataType";
+import { useLoadingContext } from "~/utils/loadingContext";
 
 const EditEvent = () => {
     const location = useLocation();
@@ -10,9 +11,12 @@ const EditEvent = () => {
     const userId = searchParams.get('userId');
     const workDateEnd = searchParams.get('workDateEnd');
     const [data, setData] = useState<WorkData>()
+    const { setIsLoading } = useLoadingContext();
+    const navigate = useNavigate();
 
     useEffect(() => {
         (async () => {
+            setIsLoading(true)
             try {
                 if (userId && workDateEnd) {
                     const res = await Work.getInfo(userId, workDateEnd)
@@ -28,12 +32,13 @@ const EditEvent = () => {
                             userId: workInfo?.userId?._id
                         })
                     }
-                }
+                } else navigate('/')
             } catch (e) {
                 console.log(e)
             }
+            setIsLoading(false)
         })()
-    }, [])
+    }, [userId, workDateEnd])
 
     return (
         <EventForm isEdit={true} data={data} />

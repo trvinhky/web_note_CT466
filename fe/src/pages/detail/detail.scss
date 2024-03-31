@@ -5,67 +5,89 @@
 }
 
 .detail {
-    &-title {
-        font-size: 2rem;
-        font-weight: 600;
-        margin-bottom: 10px;
-    }
+    @extend .space-between;
+    justify-content: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: 50% 50%;
+    min-height: 60vh;
 
     &-info {
-        @extend .space-between;
-        gap: 10px;
-        margin-bottom: 20px;
+        position: relative;
+        width: 60%;
+        color: #fff;
+        background-color: rgba($color: #000, $alpha: 0.8);
+        padding: 30px;
+        border-radius: 10px;
+        margin: 30px 0;
+
+        &__title {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #e1b12c;
+        }
+
+        &__desc {
+            font-size: 1.2rem;
+            line-height: 1.4;
+        }
 
         &__time {
+            font-size: 1.1rem;
+            margin: 20px 0;
             @extend .space-between;
             justify-content: flex-start;
             gap: 5px;
+            font-weight: 400;
+            color: #38ada9;
         }
 
-        &__mark {
-            color: #fff;
-            display: block;
-            padding: 4px 15px;
-            border-radius: 2px;
+        &__auth {
+            font-size: 1.2rem;
+            @extend .space-between;
+            justify-content: flex-start;
+            gap: 5px;
+            color: #b8e994;
+            font-weight: 600;
+        }
 
-            &--low {
-                background-color: #b2bec3;
+        &__group {
+            display: flex;
+            align-items: unset;
+            justify-content: flex-end;
+            gap: 10px;
+
+            button {
+                font-size: 1.4rem;
+                padding: 6px 15px;
+                cursor: pointer;
+                border: none;
+                border-radius: 5px;
+                color: #fff;
+                text-decoration: none;
             }
 
-            &--normal {
-                background-color: #00b894;
+            &--edit {
+                background-color: #f6b93b;
             }
 
-            &--high {
-                background-color: #d63031;
+            &--delete {
+                background-color: #eb2f06;
             }
         }
-    }
 
-    &-members {
-        font-weight: 600;
-        font-size: 1.2rem;
-        margin-bottom: 10px;
+        &__status {
+            position: absolute;
+            top: 0;
+            right: 0;
+            padding: 10px;
+            z-index: 1;
+            font-weight: 600;
+            color: #fad390;
 
-        span {
-            font-weight: normal;
-            display: inline-block;
-            padding: 4px 15px;
-            border-radius: 4px;
-            color: #fff;
-            background-color: #22a6b3;
-            margin-left: 10px;
-        }
-    }
-
-    &-group {
-        @extend .space-between;
-        font-size: 1rem;
-
-        &__check {
-
-            span {
-                font-weight: 600;
+            &.active {
+                color: #4cd137;
             }
         }
     }

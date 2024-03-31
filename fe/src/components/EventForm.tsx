@@ -10,7 +10,8 @@ import { useSelector } from 'react-redux';
 import { userInfoSelector } from '~/store/selectors';
 import { useNavigate } from 'react-router-dom';
 import { WorkData } from '~/types/dataType';
-import { convertDate, DATEFORMAT, DATEFORMATFULL } from '~/utils/const';
+import { convertDate, DATEFORMAT, DATEFORMATFULL, TIMEFORMAT } from '~/utils/const';
+import { useLoadingContext } from '~/utils/loadingContext';
 
 type RangePickerProps = GetProps<typeof DatePicker.RangePicker>;
 const { TextArea } = Input;
@@ -22,9 +23,10 @@ type PropsType = {
     isEdit?: boolean
     isModal?: boolean
     data?: WorkData
+    setIsModalOpen?: React.Dispatch<React.SetStateAction<boolean>>
 }
 
-const EventForm = ({ isEdit, isModal, data }: PropsType) => {
+const EventForm = ({ isEdit, isModal, data, setIsModalOpen }: PropsType) => {
     const [messageApi, contextHolder] = message.useMessage();
     const navigate = useNavigate();
     const userInfo = useSelector(userInfoSelector)
@@ -33,6 +35,8 @@ const EventForm = ({ isEdit, isModal, data }: PropsType) => {
     const [status, setStatus] = useState<boolean>(false)
     const [listDate, setListDate] = useState<Dayjs[]>([])
     const [listTime, setListTime] = useState<Dayjs[]>([])
+
+    const { setIsLoading } = useLoadingContext();
 
     useEffect(() => {
         if (isEdit && data) {
@@ -132,15 +136,29 @@ const EventForm = ({ isEdit, isModal, data }: PropsType) => {
             navigate("/form")
         }
 
+        setIsLoading(true)
         try {
-            const res = await Work.create({
-                workTitle: title,
-                workDescription: description,
-                workDateStart: `${listDate[0]} ${listTime[0]}`,
-                workDateEnd: `${listDate[1]} ${listTime[1]}`,
-                userId: userInfo._id,
-                workStatus: status
-            })
+            let res
+            if (isEdit) {
+                res = await Work.update(data?._id as String, {
+                    workTitle: title,
+                    workDescription: description,
+                    workDateStart: `${listDate[0].format(DATEFORMAT)} ${listTime[0].format(TIMEFORMAT)}`,
+                    workDateEnd: `${listDate[1].format(DATEFORMAT)} ${listTime[1].format(TIMEFORMAT)}`,
+                    workStatus: status
+                })
+            } else {
+                res = await Work.create({
+                    workTitle: title,
+                    workDescription: description,
+                    workDateStart: `${listDate[0].format(DATEFORMAT)} ${listTime[0].format(TIMEFORMAT)}`,
+                    workDateEnd: `${listDate[1].format(DATEFORMAT)} ${listTime[1].format(TIMEFORMAT)}`,
+                    userId: userInfo._id,
+                    workStatus: status
+                })
+            }
+
+            if (!res) return
 
             if (res.errorCode === 0) {
                 messageApi.open({
@@ -149,6 +167,8 @@ const EventForm = ({ isEdit, isModal, data }: PropsType) => {
                     content: res.message,
                     duration: 2,
                 });
+                if (isEdit) navigate("/event-list")
+                if (isModal && setIsModalOpen) setIsModalOpen(false)
                 resetValue()
             } else {
                 messageApi.open({
@@ -163,10 +183,11 @@ const EventForm = ({ isEdit, isModal, data }: PropsType) => {
             messageApi.open({
                 key: 'updatable',
                 type: 'error',
-                content: 'Create failed',
+                content: isEdit ? 'Edit failed' : 'Create failed',
                 duration: 2,
             });
         }
+        setIsLoading(false)
     };
 
     return (
@@ -225,19 +246,17 @@ const EventForm = ({ isEdit, isModal, data }: PropsType) => {
                         <TimePicker.RangePicker
                             value={[listTime[0], listTime[1]]}
                             style={{ width: '100%' }}
-                            onChange={(_, dateStrings) => {
-                                setListTime(dateStrings.map(date => dayjs(date)));
-                            }}
+                            onChange={(_, dateStrings) => setListTime([
+                                dayjs(dateStrings[0], TIMEFORMAT),
+                                dayjs(dateStrings[1], TIMEFORMAT)
+                            ])}
                         />
                     </div>
 
                 </Flex>
-                {
-                    !isModal &&
-                    <div className="group-btn">
-                        <button type="submit">{isEdit ? 'Save' : 'Create'}</button>
-                    </div>
-                }
+                <div className="group-btn">
+                    <button type="submit">{isEdit ? 'Save' : 'Create'}</button>
+                </div>
             </form>
         </div>
     )

@@ -1,79 +1,127 @@
 import { useEffect, useState } from 'react';
 import './detail.scss'
-import { useParams } from 'react-router-dom';
-import { Members, WorkInfo } from '~/types/dataType';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { WorkInfo } from '~/types/dataType';
 import Work from '~/services/work';
-import Worker from '~/services/worker';
+import ImageWork from '~/assets/images/work.jpeg'
+import { BulbOutlined, ClockCircleOutlined, DeleteOutlined, EditOutlined, QuestionCircleOutlined, UserOutlined } from '@ant-design/icons';
+import { useLoadingContext } from '~/utils/loadingContext';
+import { message, Popconfirm } from 'antd';
 
 function Detail() {
-    const { id } = useParams();
+    const [messageApi, contextHolder] = message.useMessage();
+    const location = useLocation();
+    const searchParams = new URLSearchParams(location.search);
+    const userId = searchParams.get('userId');
+    const workDateEnd = searchParams.get('workDateEnd');
     const [workInfo, setWorkInfo] = useState<WorkInfo>()
-    const [members, setMembers] = useState<Members[]>([])
-
-    const convertNumber = (num: number) => num >= 10 ? num : `0${num}`
-
-    const convertTime = (time: String) => {
-        const date = new Date(time as string);
-
-        // Get individual components of the date
-        const year = date.getFullYear();
-        const month = convertNumber(date.getMonth() + 1); // Months are zero-based, so January is 0
-        const day = convertNumber(date.getDate());
-        const hours = convertNumber(date.getHours());
-        const minutes = convertNumber(date.getMinutes());
-        const seconds = convertNumber(date.getSeconds());
-
-        // Format the components into a readable string
-        return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
-    }
+    const navigate = useNavigate();
+    const { setIsLoading } = useLoadingContext();
 
     useEffect(() => {
-        const getWorkInfo = async () => {
-            if (id) {
+        (async () => {
+            setIsLoading(true)
+            if (userId && workDateEnd) {
                 try {
-                    const res = await Work.getInfo(id)
-                    const resMember = await Worker.getMembers(id)
+                    const res = await Work.getInfo(userId, workDateEnd)
 
                     if (res.errorCode === 0 && !Array.isArray(res.data)) {
                         setWorkInfo(res.data)
                     }
 
-                    if (resMember.errorCode === 0 && Array.isArray(resMember.data)) {
-                        setMembers(resMember.data)
-                    }
                 } catch (e) {
                     console.log(e)
                 }
-            }
-        }
+            } else navigate('/')
+            setIsLoading(false)
+        })()
 
-        getWorkInfo()
-    }, [id])
+    }, [userId, workDateEnd])
+
+    const handleEdit = () => {
+        navigate(`/edit?userId=${userId}&workDateEnd=${workDateEnd}`)
+    }
+
+    const handleDeleteEvent = async (id: String) => {
+        if (!id) return
+        setIsLoading(true)
+        try {
+            messageApi.open({
+                key: 'updatable',
+                type: 'loading',
+                content: 'Loading...',
+            });
+            const res = await Work.delete(id)
+            if (res.errorCode === 0) {
+                messageApi.open({
+                    key: 'updatable',
+                    type: 'success',
+                    content: res.message,
+                    duration: 2,
+                });
+                setIsLoading(false)
+                navigate('/')
+            } else {
+                messageApi.open({
+                    key: 'updatable',
+                    type: 'error',
+                    content: res.message,
+                    duration: 2,
+                });
+            }
+        } catch (e) {
+            console.log(e)
+            messageApi.open({
+                key: 'updatable',
+                type: 'error',
+                content: 'Delete failed',
+                duration: 2,
+            });
+        }
+        setIsLoading(false)
+    }
 
     return (
-        <div className='detail'>
-            <h1 className="detail-title">
-                {workInfo && workInfo.workTitle}
-            </h1>
+        <div className='detail' style={{ backgroundImage: `url(${ImageWork})` }}>
+            {contextHolder}
             <div className="detail-info">
+                <h2 className="detail-info__title">
+                    <BulbOutlined /> {workInfo?.workTitle}
+                </h2>
+                <p className="detail-info__desc">
+                    {workInfo?.workDescription}
+                </p>
                 <div className="detail-info__time">
-                    <span>{workInfo && convertTime(workInfo.workDateStart as String)}</span>-
-                    <span>{workInfo && convertTime(workInfo.workDateEnd as String)}</span>
+                    <ClockCircleOutlined /> 2024-01-10 09:00:00 - 2024-02-01 10:00:00
                 </div>
-                <span className="detail-info__mark detail-info__mark--normal">
-                    {workInfo && workInfo.markId?.markName}
+                <div className="detail-info__auth">
+                    <UserOutlined /> <span>{workInfo?.userId?.userName}</span>
+                </div>
+
+                <div className="detail-info__group">
+                    <button
+                        className="detail-info__group--edit"
+                        onClick={handleEdit}
+                    >
+                        <EditOutlined />
+                    </button>
+                    <Popconfirm
+                        title="Delete event"
+                        description="Do you want to delete this event?"
+                        icon={<QuestionCircleOutlined style={{ color: 'red' }} />}
+                        onConfirm={() => handleDeleteEvent(workInfo?._id as String)}
+                    >
+                        <button
+                            className="detail-info__group--delete"
+                        >
+                            <DeleteOutlined />
+                        </button>
+                    </Popconfirm>
+
+                </div>
+                <span className={`detail-info__status ${workInfo?.workStatus ? 'active' : ''}`}>
+                    {workInfo?.workStatus ? 'Complete' : 'Doing'}
                 </span>
-            </div>
-            <div className="detail-members">
-                Members: {members.length > 0 && members.map((member) => (<span key={(member._id || member.id) as string}>{member.userId?.userName}</span>))}
-            </div>
-            <div className="detail-group">
-                <div className="detail-group__check">
-                    <span>Total check:</span> 1
-                </div>
-                <div className="detail-group__check">
-                    <span>Author:</span> {workInfo?.userId?.userName}
-                </div>
             </div>
         </div>
     )

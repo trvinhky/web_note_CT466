@@ -1,6 +1,6 @@
-import { DeleteOutlined, EditOutlined } from '@ant-design/icons'
+import { DeleteOutlined, EditOutlined, QuestionCircleOutlined } from '@ant-design/icons'
 import './eventList.scss'
-import { Select, Typography, message } from 'antd';
+import { Popconfirm, Select, Typography, message } from 'antd';
 import { useEffect, useState } from 'react';
 import { userInfoSelector } from '~/store/selectors';
 import { useSelector } from 'react-redux';
@@ -8,6 +8,8 @@ import { convertDate, DATEFORMATFULL } from '~/utils/const';
 import { Link, useNavigate } from 'react-router-dom';
 import Work from '~/services/work';
 import { WorkInfo } from '~/types/dataType';
+import { QueryValue } from '~/types/global';
+import { useLoadingContext } from '~/utils/loadingContext';
 
 const { Paragraph } = Typography;
 
@@ -16,6 +18,10 @@ const EventList = () => {
     const [messageApi, contextHolder] = message.useMessage();
     const userInfo = useSelector(userInfoSelector)
     const [listEvent, setListEvent] = useState<WorkInfo[]>([])
+    const [monthSelect, setMonthSelect] = useState<Number>(1)
+    const [yearSelect, setYearSelect] = useState<Number>(2000)
+    const [statusSelect, setStatusSelect] = useState<boolean>(false)
+    const { setIsLoading } = useLoadingContext();
 
     const months = [
         { value: 1, label: 'January' },
@@ -32,22 +38,56 @@ const EventList = () => {
         { value: 12, label: 'December' }
     ];
 
-    const years = Array.from({ length: 30 }, (_, i) => ({ value: 1900 + i, label: (1900 + i).toString() }));
+    const years = Array.from({ length: 30 }, (_, i) => ({ value: 2000 + i, label: (2000 + i).toString() }));
 
-    const handleChangeMonth = (value: Number) => {
-        console.log(`selected ${value}`);
+    const getDatafilter = async (query: QueryValue) => {
+        if (!userInfo) return
+        setIsLoading(true)
+        try {
+            const res = await Work.getAll({
+                ...query,
+                userId: userInfo._id as String
+            })
+
+            if (res.errorCode === 0 && Array.isArray(res.data)) {
+                setListEvent(res.data)
+            } else {
+                setListEvent([])
+            }
+        } catch (e) {
+            console.log(e)
+        }
+        setIsLoading(false)
+    }
+
+    const getDataQuery = async () => {
+        await getDatafilter({
+            month: monthSelect,
+            year: yearSelect,
+            status: statusSelect as Boolean
+        } as QueryValue)
+    }
+
+    const handleChangeMonth = async (value: Number) => {
+        setMonthSelect(value)
+        await getDataQuery()
     };
 
-    const handleChangeYear = (value: Number) => {
-        console.log(`selected ${value}`);
+    const handleChangeYear = async (value: Number) => {
+        setYearSelect(value)
+        await getDataQuery()
     };
 
-    const handleChangeStatus = (value: boolean) => {
-        console.log(`selected ${value}`);
+    const handleChangeStatus = async (value: boolean) => {
+        setStatusSelect(value)
+        await getDataQuery()
     };
 
     useEffect(() => {
-        const getAllEvent = async () => {
+        document.title = 'Event List';
+
+        (async () => {
+            setIsLoading(true)
             if (userInfo) {
                 try {
                     const res = await Work.getAll({
@@ -61,14 +101,13 @@ const EventList = () => {
                     console.log(e)
                 }
             }
-        }
-
-        getAllEvent()
+            setIsLoading(false)
+        })()
     }, [userInfo])
 
     const handleDeleteEvent = async (id: String) => {
-        const check = confirm("Do you want to delete this event?")
-        if (!check || !id) return
+        if (!id) return
+        setIsLoading(true)
         try {
             messageApi.open({
                 key: 'updatable',
@@ -101,6 +140,7 @@ const EventList = () => {
                 duration: 2,
             });
         }
+        setIsLoading(false)
     }
 
     const handleEdit = (userId: String, workDateEnd: String) => {
@@ -116,19 +156,19 @@ const EventList = () => {
                 </h1>
                 <div className="event-group">
                     <Select
-                        defaultValue={1}
+                        value={monthSelect}
                         style={{ width: 120 }}
                         onChange={handleChangeMonth}
                         options={months}
                     />
                     <Select
-                        defaultValue={1900}
+                        value={yearSelect}
                         style={{ width: 120 }}
                         onChange={handleChangeYear}
                         options={years}
                     />
                     <Select
-                        defaultValue={false}
+                        value={statusSelect}
                         style={{ width: 120 }}
                         onChange={handleChangeStatus}
                         options={[
@@ -143,7 +183,7 @@ const EventList = () => {
                     listEvent.length > 0 && listEvent.map((val) => (
                         <li className="event-list__item" key={val._id as string}>
                             <h4 className="name">
-                                <Link to={`/detail/${val._id}`}>{val.workTitle}</Link>
+                                <Link to={`/detail?userId=${val.userId?._id}&workDateEnd=${val.workDateEnd}`}>{val.workTitle}</Link>
                             </h4>
                             <Paragraph ellipsis={{ rows: 2, expandable: false }}>
                                 {val.workDescription}
@@ -162,12 +202,16 @@ const EventList = () => {
                                             >
                                                 <EditOutlined />
                                             </button>
-                                            <button
-                                                className='box-btn__delete'
-                                                onClick={() => handleDeleteEvent(val._id as String)}
+                                            <Popconfirm
+                                                title="Delete event"
+                                                description="Do you want to delete this event?"
+                                                icon={<QuestionCircleOutlined style={{ color: 'red' }} />}
+                                                onConfirm={() => handleDeleteEvent(val._id as String)}
                                             >
-                                                <DeleteOutlined />
-                                            </button>
+                                                <button className='box-btn__delete'>
+                                                    <DeleteOutlined />
+                                                </button>
+                                            </Popconfirm>
                                         </div>
                                     )
                                 }

@@ -33,7 +33,7 @@ path: `/work/create`;
 // method: PUT
 id: string;
 path: `/work/edit?id=${id}`;
-// body: (workTitle, workDescription) - string, (workDateStart, workDateEnd) - Date
+// body: (workTitle, workDescription) - string, (workDateStart, workDateEnd) - Date, workStatus - boolean (option)
 ```
 
 ### **Update Status Work**

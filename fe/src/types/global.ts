@@ -4,3 +4,10 @@ export type ErrorLabel = {
     userName?: String
     passwordConfirm?: String
 }
+
+export type QueryValue = {
+    userId: String
+    status?: Boolean
+    year?: Number
+    month?: Number
+}

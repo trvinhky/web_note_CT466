@@ -1,13 +1,7 @@
 import NotesAPI from "~/api";
 import { APIType } from "~/types/apiType";
 import { WorkData, WorkInfo } from "~/types/dataType";
-
-type QueryValue = {
-    userId: String
-    status?: Boolean
-    year?: Number
-    month?: Number
-}
+import { QueryValue } from "~/types/global";
 
 class Work extends NotesAPI {
     public async create(data: WorkData): Promise<APIType<WorkData>> {

@@ -51,10 +51,10 @@ const workControllers = {
     // chỉnh sửa công việc
     edit: asyncHandler(async (req, res) => {
         const { id } = req.query
-        const { workTitle, workDateStart, workDateEnd, workDescription } = req.body
+        const { workTitle, workDateStart, workDateEnd, workDescription, workStatus } = req.body
 
         // kiểm tra các trường
-        if (!workTitle || !workDateStart || !workDateEnd || !workDescription || !id) {
+        if (!workTitle || !workDateStart || !workDateEnd || !workDescription || !id || typeof workStatus !== 'boolean') {
             return res.status(400).json({
                 errorCode: 1,
                 message: 'Tất cả các trường là bắt buộc!'
@@ -70,7 +70,8 @@ const workControllers = {
                         workDateEnd,
                         workDateStart,
                         workTitle,
-                        workDescription
+                        workDescription,
+                        workStatus
                     }
                 },
                 { new: true }
