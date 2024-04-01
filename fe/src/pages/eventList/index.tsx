@@ -124,7 +124,7 @@ const EventList = () => {
                     content: res.message,
                     duration: 2,
                 });
-                setListEvent(listEvent.filter((val) => val._id === id))
+                setListEvent(listEvent.filter((val) => val._id !== id))
             } else {
                 messageApi.open({
                     key: 'updatable',

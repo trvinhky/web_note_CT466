@@ -26,6 +26,7 @@ function Detail() {
                     const res = await Work.getInfo(userId, workDateEnd)
 
                     if (res?.errorCode === 0 && !Array.isArray(res.data)) {
+                        document.title = res?.data?.workTitle as string
                         setWorkInfo(res.data)
                     }
 
