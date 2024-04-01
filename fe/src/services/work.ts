@@ -23,7 +23,7 @@ class Work extends NotesAPI {
     public async getAll(query: QueryValue): Promise<APIType<WorkInfo>> {
         let queryString = `userId=${query.userId}`
 
-        if (query.status) {
+        if (typeof query.status === 'boolean') {
             queryString += `&status=${query.status}`
         }
 
@@ -40,10 +40,10 @@ class Work extends NotesAPI {
     public async getCurrent(query: QueryValue): Promise<APIType<WorkInfo>> {
         let queryString = `userId=${query.userId}`
 
-        if (query.status) {
+        if (typeof query.status === 'boolean') {
             queryString += `&status=${query.status}`
         }
-        return await this.getAPI(`/work/all?${queryString}`)
+        return await this.getAPI(`/work/current?${queryString}`)
     }
 }
 

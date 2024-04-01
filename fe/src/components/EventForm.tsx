@@ -39,6 +39,7 @@ const EventForm = ({ isEdit, isModal, data, setIsModalOpen }: PropsType) => {
     const { setIsLoading } = useLoadingContext();
 
     useEffect(() => {
+        setIsLoading(true)
         if (isEdit && data) {
             setTitle(data.workTitle as string)
             setDescription(data.workDescription as string)
@@ -53,15 +54,14 @@ const EventForm = ({ isEdit, isModal, data, setIsModalOpen }: PropsType) => {
                 dayjs(convertDate(data.workDateEnd as string, DATEFORMATFULL)),
             ])
         }
-    }, [isEdit])
 
-    useEffect(() => {
         if (isModal && data) {
             setListDate([
                 dayjs(data.workDateStart as string)
             ])
         }
-    }, [isModal])
+        setIsLoading(false)
+    }, [data, isEdit, isModal])
 
     const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setTitle(e.target.value);

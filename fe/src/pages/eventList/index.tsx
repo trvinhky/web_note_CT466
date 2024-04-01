@@ -1,7 +1,7 @@
 import { DeleteOutlined, EditOutlined, QuestionCircleOutlined } from '@ant-design/icons'
 import './eventList.scss'
 import { Popconfirm, Select, Typography, message } from 'antd';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { userInfoSelector } from '~/store/selectors';
 import { useSelector } from 'react-redux';
 import { convertDate, DATEFORMATFULL } from '~/utils/const';
@@ -10,6 +10,7 @@ import Work from '~/services/work';
 import { WorkInfo } from '~/types/dataType';
 import { QueryValue } from '~/types/global';
 import { useLoadingContext } from '~/utils/loadingContext';
+import Empty from '~/assets/images/empty.gif'
 
 const { Paragraph } = Typography;
 
@@ -49,7 +50,7 @@ const EventList = () => {
                 userId: userInfo._id as String
             })
 
-            if (res.errorCode === 0 && Array.isArray(res.data)) {
+            if (res?.errorCode === 0 && Array.isArray(res.data)) {
                 setListEvent(res.data)
             } else {
                 setListEvent([])
@@ -68,19 +69,20 @@ const EventList = () => {
         } as QueryValue)
     }
 
+    useMemo(() => {
+        (async () => await getDataQuery())()
+    }, [monthSelect, statusSelect, yearSelect])
+
     const handleChangeMonth = async (value: Number) => {
         setMonthSelect(value)
-        await getDataQuery()
     };
 
     const handleChangeYear = async (value: Number) => {
         setYearSelect(value)
-        await getDataQuery()
     };
 
     const handleChangeStatus = async (value: boolean) => {
         setStatusSelect(value)
-        await getDataQuery()
     };
 
     useEffect(() => {
@@ -94,7 +96,7 @@ const EventList = () => {
                         userId: userInfo._id as String
                     })
 
-                    if (res.errorCode === 0 && Array.isArray(res.data)) {
+                    if (res?.errorCode === 0 && Array.isArray(res.data)) {
                         setListEvent(res.data)
                     }
                 } catch (e) {
@@ -115,7 +117,7 @@ const EventList = () => {
                 content: 'Loading...',
             });
             const res = await Work.delete(id)
-            if (res.errorCode === 0) {
+            if (res?.errorCode === 0) {
                 messageApi.open({
                     key: 'updatable',
                     type: 'success',
@@ -220,6 +222,11 @@ const EventList = () => {
                     ))
                 }
             </ul>
+            {listEvent?.length <= 0 &&
+                <div className="event-empty">
+                    <img src={Empty} alt="empty" />
+                </div>
+            }
         </div>
     )
 }

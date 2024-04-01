@@ -20,7 +20,7 @@ const EditEvent = () => {
             try {
                 if (userId && workDateEnd) {
                     const res = await Work.getInfo(userId, workDateEnd)
-                    if (res.errorCode === 0 && !Array.isArray(res.data)) {
+                    if (res?.errorCode === 0 && !Array.isArray(res.data)) {
                         const workInfo = res.data
                         setData({
                             _id: workInfo?._id,

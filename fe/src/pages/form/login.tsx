@@ -60,7 +60,7 @@ const Login = ({ ToggleLogin }: { ToggleLogin: ToggleLoginFunction }) => {
                 userPassword: password,
             }
             const res = await User.signIn(user)
-            if (res.errorCode === 0) {
+            if (res?.errorCode === 0) {
                 messageApi.open({
                     key: 'updatable',
                     type: 'success',
@@ -140,7 +140,7 @@ const Login = ({ ToggleLogin }: { ToggleLogin: ToggleLoginFunction }) => {
                     }
                 </div>
                 <div className="form-check">
-                    <input type="checkbox" name="check" checked />
+                    <input type="checkbox" name="check" checked readOnly />
                     <label htmlFor="check">Remember me</label>
                 </div>
 

@@ -25,7 +25,7 @@ function Detail() {
                 try {
                     const res = await Work.getInfo(userId, workDateEnd)
 
-                    if (res.errorCode === 0 && !Array.isArray(res.data)) {
+                    if (res?.errorCode === 0 && !Array.isArray(res.data)) {
                         setWorkInfo(res.data)
                     }
 
@@ -52,7 +52,7 @@ function Detail() {
                 content: 'Loading...',
             });
             const res = await Work.delete(id)
-            if (res.errorCode === 0) {
+            if (res?.errorCode === 0) {
                 messageApi.open({
                     key: 'updatable',
                     type: 'success',

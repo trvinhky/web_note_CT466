@@ -41,7 +41,7 @@ const Home = () => {
                         month: new Date().getMonth() + 1
                     })
 
-                    if (res.errorCode === 0 && Array.isArray(res.data)) {
+                    if (res?.errorCode === 0 && Array.isArray(res.data)) {
                         setListEvent(res.data)
                     }
                 } catch (e) {

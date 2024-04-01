@@ -1,7 +1,7 @@
 import '~/assets/scss/header.scss'
 import Logo from './Logo'
-import { useEffect, useState } from 'react';
-import { Drawer, message, Typography } from 'antd';
+import { useEffect, useMemo, useState } from 'react';
+import { Badge, Drawer, message, notification, Typography } from 'antd';
 import { BarsOutlined, BellFilled, CheckCircleOutlined, FormOutlined, HistoryOutlined, HomeOutlined, InfoCircleOutlined, LogoutOutlined } from '@ant-design/icons';
 import { userInfoSelector } from '~/store/selectors';
 import { useDispatch, useSelector } from 'react-redux';
@@ -10,6 +10,7 @@ import Work from '~/services/work';
 import { Link } from 'react-router-dom';
 import { actions } from '~/store/usersSlice';
 import { useLoadingContext } from '~/utils/loadingContext';
+import NotFound from '~/assets/images/notification.jpg'
 
 const { Paragraph } = Typography;
 
@@ -20,29 +21,40 @@ const Header = () => {
     const [messageApi, contextHolder] = message.useMessage();
     const dispatch = useDispatch();
     const { setIsLoading } = useLoadingContext();
+    const [api, contextHolderNotification] = notification.useNotification();
 
     useEffect(() => {
-        (async () => {
-            setIsLoading(true)
-            if (userInfo && userInfo._id) {
-                try {
-                    const res = await Work.getCurrent({
-                        userId: userInfo._id as String,
-                        status: false
-                    })
+        const callAPITime = setTimeout(() => {
+            (async () => {
+                if (userInfo && userInfo._id) {
+                    try {
+                        const res = await Work.getCurrent({
+                            userId: userInfo._id as String,
+                            status: false
+                        })
 
-                    if (res.errorCode === 0 && Array.isArray(res.data)) {
-                        setListEvent(res.data)
+                        if (res?.errorCode === 0 && Array.isArray(res.data)) {
+                            setListEvent(res.data)
+                        }
+
+                    } catch (e) {
+                        console.log(e)
                     }
-
-                } catch (e) {
-                    console.log(e)
                 }
-            }
-            setIsLoading(false)
-        })()
+            })()
+        }, 60000)
+
+        return () => clearTimeout(callAPITime)
 
     }, [])
+
+    useMemo(() => {
+        if (listEvent?.length > 0) {
+            listEvent.forEach((event) => {
+                handleNotification(event)
+            })
+        }
+    }, [listEvent])
 
     const handleSignOut = () => {
         dispatch(actions.LogOut())
@@ -56,12 +68,23 @@ const Header = () => {
         setOpen(false);
     };
 
+    const openNotification = (message: String, description: String, keyNo: String) => {
+        const key = `${keyNo}`;
+        api.open({
+            message,
+            description,
+            key,
+            onClose: close,
+        });
+    };
+
     const updateStatusWork = async (id: String) => {
+        setIsLoading(true)
         try {
             const res = await Work.update(id, {
                 workStatus: true
             })
-            if (res.errorCode === 0) {
+            if (res?.errorCode === 0) {
                 messageApi.open({
                     key: 'updatable',
                     type: 'success',
@@ -86,6 +109,18 @@ const Header = () => {
                 duration: 2,
             });
         }
+        setIsLoading(false)
+    }
+
+    const handleNotification = (data: WorkInfo) => {
+        const time = new Date(data?.workDateEnd as string).getTime()
+        if (time <= new Date().getTime()) {
+            openNotification(
+                data.workTitle as String,
+                data.workDescription as String,
+                data._id as String
+            )
+        }
     }
 
     const fillerElementListEvent = (workId: String) => {
@@ -102,6 +137,7 @@ const Header = () => {
     return (
         <div className='header'>
             {contextHolder}
+            {contextHolderNotification}
             <div className="header-logo">
                 <Logo />
             </div>
@@ -118,9 +154,11 @@ const Header = () => {
                 <span className="header-nav__logout" onClick={handleSignOut}>
                     Logout <LogoutOutlined />
                 </span>
-                <span className='header-nav__report' onClick={showDrawer}>
-                    <BellFilled style={{ fontSize: '1.4rem' }} />
-                </span>
+                <Badge count={listEvent?.length} overflowCount={99}>
+                    <span className='header-nav__report' onClick={showDrawer}>
+                        <BellFilled style={{ fontSize: '1.4rem' }} />
+                    </span>
+                </Badge>
             </nav>
             <Drawer title="Notification" onClose={onClose} open={open}>
                 <ul className="header-list">
@@ -150,7 +188,7 @@ const Header = () => {
                 {
                     listEvent.length <= 0 &&
                     <span className="no-notification">
-                        no notification
+                        <img src={NotFound} alt="no-notification" />
                     </span>
                 }
             </Drawer>
