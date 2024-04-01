@@ -79,5 +79,5 @@ path: `/work/all?userId=${userId}&status=${status}&year=${year}&month=${month}`;
 // method: GET
 userId: string;
 status: boolean; // option
-path: `/work/all?userId=${userId}&status=${status}`;
+path: `/work/all?current=${userId}&status=${status}`;
 ```

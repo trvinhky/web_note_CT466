@@ -14,7 +14,7 @@ const workControllers = {
             })
         }
 
-        let status = workStatus
+        let status = JSON.parse(workStatus)
         if (typeof status !== 'boolean') status = false
 
         try {
@@ -54,7 +54,7 @@ const workControllers = {
         const { workTitle, workDateStart, workDateEnd, workDescription, workStatus } = req.body
 
         // kiểm tra các trường
-        if (!workTitle || !workDateStart || !workDateEnd || !workDescription || !id || typeof workStatus !== 'boolean') {
+        if (!workTitle || !workDateStart || !workDateEnd || !workDescription || !id || typeof JSON.parse(workStatus) !== 'boolean') {
             return res.status(400).json({
                 errorCode: 1,
                 message: 'Tất cả các trường là bắt buộc!'
@@ -71,7 +71,7 @@ const workControllers = {
                         workDateStart,
                         workTitle,
                         workDescription,
-                        workStatus
+                        workStatus: JSON.parse(workStatus)
                     }
                 },
                 { new: true }
@@ -104,7 +104,7 @@ const workControllers = {
         const { workStatus } = req.body
 
         // kiểm tra các trường
-        if (!(typeof workStatus === "boolean") || !id) {
+        if (!(typeof JSON.parse(workStatus) === "boolean") || !id) {
             return res.status(400).json({
                 errorCode: 1,
                 message: 'Tất cả các trường là bắt buộc!'
@@ -117,7 +117,7 @@ const workControllers = {
                 { _id: id },
                 {
                     $set: {
-                        workStatus,
+                        workStatus: JSON.parse(workStatus),
                     }
                 },
                 { new: true }
@@ -235,6 +235,7 @@ const workControllers = {
             // Điều kiện
             let condition = [];
             let conditionDate;
+            const workStatus = status ? JSON.parse(status) : ''
 
             if (!isNaN(parseInt(year))) {
                 let startDate;
@@ -249,33 +250,42 @@ const workControllers = {
                 }
 
                 conditionDate = [
-                    { workDateStart: { $gte: startDate } },
-                    { workDateEnd: { $lte: endDate } }
+                    { workDateEnd: { $gte: startDate, $lt: endDate } }
                 ]
             }
 
-            if (status && typeof JSON.parse(status) === 'boolean') {
+            if (typeof workStatus === 'boolean') {
                 if (conditionDate) {
                     condition = {
                         $and: [
                             ...conditionDate,
-                            { workStatus: JSON.parse(status) },
-                            userId
+                            { workStatus },
+                            { userId }
                         ]
                     };
                 } else {
                     condition = {
                         $and: [
-                            { workStatus: JSON.parse(status) },
-                            userId
+                            { workStatus },
+                            { userId }
                         ]
                     };
                 }
             }
 
-            if (condition.length < 1) {
+            if (conditionDate?.length > 0) {
+                condition = {
+                    $and: [
+                        ...conditionDate,
+                        { userId }
+                    ]
+                }
+            }
+
+            if (condition?.length < 1) {
                 condition = { userId };
             }
+
 
             // lấy thông tin công việc theo id
             const works = await workModel.find(condition).populate({
@@ -325,9 +335,9 @@ const workControllers = {
             const endDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
 
             // Điều kiện
-            let conditionDate = {
-                workDateStart: { $gte: startDate, $lt: endDate }
-            };
+            let conditionDate = [
+                { workDateEnd: { $gte: startDate, $lt: endDate } }
+            ];
 
             if (status && typeof JSON.parse(status) === 'boolean') {
                 if (conditionDate) {
@@ -335,20 +345,20 @@ const workControllers = {
                         $and: [
                             ...conditionDate,
                             { workStatus: JSON.parse(status) },
-                            userId
+                            { userId }
                         ]
                     };
                 } else {
                     condition = {
                         $and: [
                             { workStatus: JSON.parse(status) },
-                            userId
+                            { userId }
                         ]
                     };
                 }
             }
 
-            if (condition.length < 1) {
+            if (condition?.length < 1) {
                 condition = { userId };
             }
 
