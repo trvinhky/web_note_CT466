@@ -160,7 +160,7 @@ const workControllers = {
             // tìm kiếm và xóa công việc theo id
             const isDelete = await workModel.findOneAndDelete({ _id: id })
 
-            // kiểm tra ncông việc đã xóa 
+            // kiểm tra công việc đã xóa 
             if (isDelete) {
                 return res.status(200).json({
                     message: "Xóa công việc thành công!",
