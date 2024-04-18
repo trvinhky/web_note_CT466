@@ -71,7 +71,6 @@ const userControllers = {
                         _id: user._id,
                         userName: user.userName,
                         userEmail: user.userEmail,
-                        Token: user.Token
                     },
                     message: "Đăng nhập tài khoản thành công!"
                 })
@@ -79,6 +78,43 @@ const userControllers = {
                 return res.status(404).json({
                     errorCode: 2,
                     message: "Email hoặc mật khẩu không khớp!"
+                })
+            }
+        } catch (err) {
+            return res.status(500).json({
+                errorCode: 3,
+                message: "Lỗi server!",
+                error: err.message
+            })
+        }
+    }),
+    // tìm kiếm người dùng theo email
+    search: asyncHandler(async (req, res) => {
+        const { email } = req.query
+
+        // kiểm email
+        if (!email) {
+            return res.status(400).json({
+                errorCode: 1,
+                message: "Email trường là bắt buộc!"
+            });
+        }
+
+        try {
+            // tìm kiếm người dùng trong database
+            const users = await userModel.find({ userEmail: { $regex: email, $options: 'i' } }, '-userPassword')
+
+            // kiểm tra người dùng vừa lấy và so khớp mật khẩu
+            if (users) {
+                return res.status(201).json({
+                    errorCode: 0,
+                    data: users,
+                    message: "Tìm kiếm tài khoản thành công!"
+                })
+            } else {
+                return res.status(404).json({
+                    errorCode: 2,
+                    message: "Không tìm thấy tài khoản nào!"
                 })
             }
         } catch (err) {

@@ -14,9 +14,6 @@ const userSchema = mongoose.Schema(
         userPassword: {
             type: String,
             required: [true, 'Mật khẩu không tồn tại!'],
-        },
-        Token: {
-            type: String
         }
     }
 );

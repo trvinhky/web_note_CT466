@@ -4,19 +4,15 @@ const workModel = require('../models/work.model')
 const workControllers = {
     // tạo công việc
     create: asyncHandler(async (req, res) => {
-        const { workTitle, workDateStart, workDateEnd, workDescription, userId, workStatus } = req.body
+        const { workTitle, workDateStart, workDateEnd, workDescription, groupId } = req.body
 
         // kiểm tra các trường
-        if (!workTitle || !workDateStart || !workDateEnd || !workDescription || !userId) {
+        if (!workTitle || !workDateStart || !workDateEnd || !workDescription || !groupId) {
             return res.status(400).json({
                 errorCode: 1,
                 message: 'Tất cả các trường là bắt buộc!'
             })
         }
-
-        let status = JSON.parse(workStatus)
-        if (typeof status !== 'boolean') status = false
-
         try {
             // thêm công việc mới
             const work = await workModel.create({
@@ -24,15 +20,15 @@ const workControllers = {
                 workDateStart,
                 workTitle,
                 workDescription,
-                userId,
-                workStatus: status
+                groupId
             })
 
             // kiểm tra công việc vừa thêm
             if (work) {
-                return res.status(200).json({
+                return res.status(201).json({
                     message: "Thêm công việc mới thành công!",
                     errorCode: 0,
+                    data: work
                 })
             } else {
                 return res.status(404).json({
@@ -51,10 +47,10 @@ const workControllers = {
     // chỉnh sửa công việc
     edit: asyncHandler(async (req, res) => {
         const { id } = req.query
-        const { workTitle, workDateStart, workDateEnd, workDescription, workStatus } = req.body
+        const { workTitle, workDateStart, workDateEnd, workDescription } = req.body
 
         // kiểm tra các trường
-        if (!workTitle || !workDateStart || !workDateEnd || !workDescription || !id || typeof JSON.parse(workStatus) !== 'boolean') {
+        if (!workTitle || !workDateStart || !workDateEnd || !workDescription || !id) {
             return res.status(400).json({
                 errorCode: 1,
                 message: 'Tất cả các trường là bắt buộc!'
@@ -71,53 +67,6 @@ const workControllers = {
                         workDateStart,
                         workTitle,
                         workDescription,
-                        workStatus: JSON.parse(workStatus)
-                    }
-                },
-                { new: true }
-            )
-
-            // kiểm tra cập nhật
-            if (work) {
-                return res.status(201).json({
-                    message: "Cập nhật thông tin công việc thành công!",
-                    data: work,
-                    errorCode: 0
-                })
-            } else {
-                return res.status(404).json({
-                    message: "Cập nhật thông tin công việc thất bại!",
-                    errorCode: 2
-                })
-            }
-        } catch (err) {
-            return res.status(500).json({
-                errorCode: 3,
-                message: "Lỗi server!",
-                error: err.message
-            })
-        }
-    }),
-    // chỉnh sửa trạng thái công việc
-    editStatus: asyncHandler(async (req, res) => {
-        const { id } = req.query
-        const { workStatus } = req.body
-
-        // kiểm tra các trường
-        if (!(typeof JSON.parse(workStatus) === "boolean") || !id) {
-            return res.status(400).json({
-                errorCode: 1,
-                message: 'Tất cả các trường là bắt buộc!'
-            })
-        }
-
-        try {
-            // tìm kiếm và cập nhật thông tin công việc
-            const work = await workModel.findOneAndUpdate(
-                { _id: id },
-                {
-                    $set: {
-                        workStatus: JSON.parse(workStatus),
                     }
                 },
                 { new: true }
@@ -146,7 +95,7 @@ const workControllers = {
     }),
     // xóa công việc
     delete: asyncHandler(async (req, res) => {
-        const { id } = req.params
+        const { id } = req.query
 
         // kiểm tra id công việc
         if (!id) {
@@ -180,62 +129,13 @@ const workControllers = {
             })
         }
     }),
-    // lấy thông tin công việc
-    getOne: asyncHandler(async (req, res) => {
-        const { userId, workDateEnd } = req.query
-
-        // kiểm tra các trường
-        if (!userId || !workDateEnd) {
-            return res.status(400).json({
-                errorCode: 1,
-                message: 'Tất cả các trường là bắt buộc!'
-            })
-        }
-
-        try {
-            // lấy thông tin công việc theo id
-            const work = await workModel.findOne({ userId, workDateEnd }).populate({
-                path: 'userId',
-                select: '-userPassword' // Loại bỏ trường userPassword từ bảng user
-            })
-
-            if (work) {
-                return res.status(201).json({
-                    errorCode: 0,
-                    data: work,
-                    message: "Lấy thông tin công việc thành công!"
-                })
-            } else {
-                return res.status(404).json({
-                    errorCode: 2,
-                    message: "Lấy thông tin công việc thất bại!"
-                })
-            }
-        } catch (err) {
-            return res.status(500).json({
-                errorCode: 3,
-                message: "Lỗi server!",
-                error: err.message
-            })
-        }
-    }),
     // lấy tất cả công việc
     getAll: asyncHandler(async (req, res) => {
-        const { userId, status, year, month } = req.query
-
-        // kiểm tra userId
-        if (!userId) {
-            return res.status(400).json({
-                errorCode: 1,
-                message: 'userId là bắt buộc!'
-            })
-        }
+        const { year, month } = req.query
 
         try {
             // Điều kiện
-            let condition = [];
             let conditionDate;
-            const workStatus = status ? JSON.parse(status) : ''
 
             if (!isNaN(parseInt(year))) {
                 let startDate;
@@ -249,49 +149,11 @@ const workControllers = {
                     endDate = new Date(year, 11, 31, 23, 59, 59);
                 }
 
-                conditionDate = [
-                    { workDateEnd: { $gte: startDate, $lt: endDate } }
-                ]
+                conditionDate = { workDateEnd: { $gte: startDate, $lt: endDate } }
             }
 
-            if (typeof workStatus === 'boolean') {
-                if (conditionDate) {
-                    condition = {
-                        $and: [
-                            ...conditionDate,
-                            { workStatus },
-                            { userId }
-                        ]
-                    };
-                } else {
-                    condition = {
-                        $and: [
-                            { workStatus },
-                            { userId }
-                        ]
-                    };
-                }
-            }
-
-            if (conditionDate?.length > 0) {
-                condition = {
-                    $and: [
-                        ...conditionDate,
-                        { userId }
-                    ]
-                }
-            }
-
-            if (condition?.length < 1) {
-                condition = { userId };
-            }
-
-
-            // lấy thông tin công việc theo id
-            const works = await workModel.find(condition).populate({
-                path: 'userId',
-                select: '-userPassword' // Loại bỏ trường userPassword từ bảng user
-            })
+            // lấy thông tin công việc 
+            const works = await workModel.find(conditionDate)
 
             if (works) {
                 return res.status(201).json({
@@ -315,58 +177,19 @@ const workControllers = {
     }),
     // lấy tất cả công việc hiện tại
     getAllCurrent: asyncHandler(async (req, res) => {
-        const { userId, status } = req.query
-
-        // kiểm tra userId
-        if (!userId) {
-            return res.status(400).json({
-                errorCode: 1,
-                message: 'userId là bắt buộc!'
-            })
-        }
+        const { count } = req.query
 
         try {
-            // Điều kiện
-            let condition = [];
-
+            const date = count ? +count : 1
             // Tạo giá trị cho ngày bắt đầu và kết thúc của ngày hiện tại
-            const today = new Date();
-            const startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-            const endDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+            const startDate = new Date();
+            const endDate = new Date(startDate.getDate() + date);
 
             // Điều kiện
-            let conditionDate = [
-                { workDateEnd: { $gte: startDate, $lt: endDate } }
-            ];
+            const condition = { workDateEnd: { $gte: startDate, $lt: endDate } };
 
-            if (status && typeof JSON.parse(status) === 'boolean') {
-                if (conditionDate) {
-                    condition = {
-                        $and: [
-                            ...conditionDate,
-                            { workStatus: JSON.parse(status) },
-                            { userId }
-                        ]
-                    };
-                } else {
-                    condition = {
-                        $and: [
-                            { workStatus: JSON.parse(status) },
-                            { userId }
-                        ]
-                    };
-                }
-            }
-
-            if (condition?.length < 1) {
-                condition = { userId };
-            }
-
-            // lấy thông tin công việc theo id
-            const works = await workModel.find(condition).populate({
-                path: 'userId',
-                select: '-userPassword' // Loại bỏ trường userPassword từ bảng user
-            })
+            // lấy thông tin công việc
+            const works = await workModel.find(condition)
 
             if (works) {
                 return res.status(201).json({

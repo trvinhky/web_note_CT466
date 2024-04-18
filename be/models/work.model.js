@@ -20,16 +20,11 @@ const workSchema = mongoose.Schema(
             required: [true, 'Thời gian kết thúc không tồn tại!'],
             primaryKey: true
         },
-        workStatus: {
-            type: Boolean,
-            default: false,
-        },
-        userId: {
+        groupId: {
             type: Schema.Types.ObjectId,
-            required: [true, 'Id người dùng không tồn tại!'],
-            ref: 'user',
-            primaryKey: true
-        }
+            required: [true, 'Id nhóm không tồn tại!'],
+            ref: 'group',
+        },
     }
 );
 

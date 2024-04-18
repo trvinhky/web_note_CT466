@@ -1,12 +1,10 @@
 const router = require("express").Router();
-const workController = require('../controllers/work.controller')
+const workControllers = require('../controllers/work.controller')
 
-router.post('/create', workController.create)
-router.put('/edit', workController.edit)
-router.put('/edit-status', workController.editStatus)
-router.delete('/delete/:id', workController.delete)
-router.get('/info', workController.getOne)
-router.get('/all', workController.getAll)
-router.get('/current', workController.getAllCurrent)
+router.post('/create', workControllers.create)
+router.put('/edit', workControllers.edit)
+router.delete('/delete', workControllers.delete)
+router.get('/all', workControllers.getAll)
+router.get('/current', workControllers.getAllCurrent)
 
 module.exports = router;

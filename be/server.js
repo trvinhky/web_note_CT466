@@ -34,9 +34,12 @@ app.use(function (req, res, next) {
 connectDB()
 
 // Routes
-const path = (name) => `/api/v1/${name}`
+const path = (name) => `/api/v2/${name}`
 app.use(path('user'), require('./routes/user.route'))
 app.use(path('work'), require('./routes/work.route'))
+app.use(path('group'), require('./routes/group.route'))
+app.use(path('groupInfo'), require('./routes/groupInfo.route'))
+app.use(path('workInfo'), require('./routes/workInfo.route'))
 
 app.listen(port, () => {
     console.log(`Server running on port ${port} (http://localhost:${port})`)
