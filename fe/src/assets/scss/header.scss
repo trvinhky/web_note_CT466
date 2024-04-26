@@ -7,7 +7,46 @@
 .header {
     @extend .between;
     gap: 10px;
-    padding: 15px 0;
+    padding: 15px 10px;
+
+    &-tablet {
+        display: none;
+
+        @media (max-width: 730px) {
+            display: block;
+        }
+
+        &__btn {
+            font-size: 1.6rem;
+            padding: 6px 15px;
+            border: none;
+            background-color: #f39c12;
+            color: #fff;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        &__link {
+            color: #f39c12;
+            display: block;
+            font-size: 1.4rem;
+            padding: 10px 0;
+
+            &:hover {
+                color: #f39c12;
+            }
+        }
+
+        &__logout {
+            @extend .between;
+            justify-content: flex-start;
+            color: #e74c3c;
+            gap: 5px;
+            padding: 10px 0;
+            cursor: pointer;
+            font-size: 1.4rem;
+        }
+    }
 
     &-nav {
         @extend .between;
@@ -15,18 +54,23 @@
         gap: 20px;
         font-size: 1.2rem;
 
+        @media (max-width: 730px) {
+            display: none;
+        }
+
         * {
             cursor: pointer;
             font-weight: 600;
         }
 
         &__link {
-            color: #000;
+            color: #f39c12;
         }
 
         &__report {
             display: inline-block;
             padding: 2px 6px;
+            color: #f39c12;
         }
 
         &__logout {
@@ -63,9 +107,20 @@
                 gap: 10px;
                 font-size: 1.4rem;
 
+                &--header {
+                    background-color: transparent;
+                    padding: 0;
+                    border-radius: none;
+                }
+
                 &__check {
                     cursor: pointer;
                     color: #00b894;
+                }
+
+                &__cancel {
+                    cursor: pointer;
+                    color: #c0392b;
                 }
             }
 

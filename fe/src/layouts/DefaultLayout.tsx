@@ -6,12 +6,12 @@ import Header from "~/components/Header";
 const DefaultLayout = () => {
     return (
         <>
-            <header className="center">
-                <div className="container">
+            <header className="center" style={{ backgroundColor: '#2c3e50' }}>
+                <div className="container" style={{ overflow: 'unset' }}>
                     <Header />
                 </div>
             </header>
-            <main className="center default">
+            <main className="center default" style={{ marginTop: '20px' }}>
                 <div className="container">
                     <Outlet />
                 </div>

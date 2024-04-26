@@ -1,19 +1,24 @@
 .event {
+    padding: 0 10px;
+
     &-top {
         display: flex;
         align-items: center;
         justify-content: space-between;
+        flex-wrap: wrap;
         margin-bottom: 10px;
     }
 
     &-title {
         font-size: 2rem;
         padding-bottom: 20px;
+        color: #f1c40f;
     }
 
     &-group {
         display: flex;
         align-items: center;
+        flex-wrap: wrap;
         gap: 10px;
     }
 
@@ -65,10 +70,14 @@
                 display: flex;
                 align-items: flex-end;
                 justify-content: space-between;
+                flex-wrap: wrap;
 
                 .time {
                     font-size: 0.8rem;
                     font-style: italic;
+                    color: #c0392b;
+                    font-weight: 600;
+                    padding-bottom: 10px;
                 }
 
                 &-btn {

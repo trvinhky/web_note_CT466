@@ -34,7 +34,7 @@ const groupControllers = {
                     errorCode: 2
                 })
             }
-        } catch (e) {
+        } catch (err) {
             return res.status(500).json({
                 errorCode: 3,
                 message: "Lỗi server!",
@@ -72,7 +72,7 @@ const groupControllers = {
                     errorCode: 2
                 })
             }
-        } catch (e) {
+        } catch (err) {
             return res.status(500).json({
                 errorCode: 3,
                 message: "Lỗi server!",
@@ -119,7 +119,7 @@ const groupControllers = {
                     errorCode: 2
                 })
             }
-        } catch (e) {
+        } catch (err) {
             return res.status(500).json({
                 errorCode: 3,
                 message: "Lỗi server!",
@@ -127,6 +127,45 @@ const groupControllers = {
             })
         }
     }),
+    // lấy group theo tên
+    getOne: asyncHandler(async (req, res) => {
+        const { name } = req.query
+
+        // kiểm tra tên nhóm
+        if (!name) {
+            return res.status(400).json({
+                errorCode: 1,
+                message: 'Tên nhóm là bắt buộc!'
+            })
+        }
+
+        try {
+            // tìm kiếm group theo tên
+            const group = await groupModel.findOne(
+                { groupName: name }
+            )
+
+            // kiểm tra group vừa tìm kiếm
+            if (group) {
+                return res.status(201).json({
+                    message: "Tìm kiếm group thành công!",
+                    errorCode: 0,
+                    data: group
+                })
+            } else {
+                return res.status(404).json({
+                    message: "Tìm kiếm group thất bại!",
+                    errorCode: 2
+                })
+            }
+        } catch (err) {
+            return res.status(500).json({
+                errorCode: 3,
+                message: "Lỗi server!",
+                error: err.message
+            })
+        }
+    })
 }
 
 module.exports = groupControllers

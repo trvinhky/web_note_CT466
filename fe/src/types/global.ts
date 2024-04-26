@@ -5,9 +5,10 @@ export type ErrorLabel = {
     passwordConfirm?: String
 }
 
-export type QueryValue = {
+export type ParamsFuncAll = {
+    groupId: String
     userId: String
     status?: Boolean
-    year?: Number
     month?: Number
+    year?: Number
 }

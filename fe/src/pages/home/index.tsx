@@ -1,15 +1,15 @@
 import './home.scss'
 import type { Dayjs } from 'dayjs';
 import { Badge, Calendar, Modal } from 'antd';
-import { WorkInfo } from '~/types/dataType';
+import { GroupInfoDataItem, WorkInfoDataItem } from '~/types/dataType';
 import { useSelector } from 'react-redux';
 import { userInfoSelector } from '~/store/selectors';
 import { useEffect, useMemo, useState } from 'react';
 import dayjs from 'dayjs';
-import Work from '~/services/work';
 import EventForm from '~/components/EventForm';
 import { useLoadingContext } from '~/utils/loadingContext';
-import { useNavigate } from 'react-router-dom';
+import GroupInfoService from '~/services/groupInfo';
+import WorkInfoService from '~/services/workInfo';
 
 type typeDate = 'warning' | 'success' | 'error'
 
@@ -22,43 +22,70 @@ type eventDataType = {
 
 const Home = () => {
     const userInfo = useSelector(userInfoSelector)
-    const [listEvent, setListEvent] = useState<WorkInfo[]>([])
+    const [listEvent, setListEvent] = useState<WorkInfoDataItem[]>([])
     const [dateSelect, setDateSelect] = useState<String>('')
     const [isModalOpen, setIsModalOpen] = useState(false);
     const { setIsLoading } = useLoadingContext();
-    const navigate = useNavigate();
+    const [listGroup, setListGroup] = useState<GroupInfoDataItem[]>([])
+
+    const getListGroups = async () => {
+        setIsLoading(true)
+        try {
+            const res = await GroupInfoService.getByUser(userInfo._id as String, true)
+            if (res?.errorCode === 0 && Array.isArray(res?.data) && res?.data.length > 0) {
+                setListGroup(res.data.filter((group) => group.groupInfoStatus === true))
+            }
+        } catch (e) {
+            console.log(e)
+        }
+        setIsLoading(false)
+    }
+
+    const getListEventByGroup = async () => {
+        setIsLoading(true)
+        try {
+            let result: WorkInfoDataItem[] = []
+
+            if (listGroup.length > 0) {
+                for (const group of listGroup) {
+                    const res = await WorkInfoService.getAll({
+                        groupId: group.groupId._id as String,
+                        userId: userInfo._id as String,
+                    })
+                    if (res?.errorCode === 0 && Array.isArray(res?.data)) {
+                        result = [...result, ...res.data]
+                    }
+                }
+            }
+            setListEvent(result)
+        } catch (e) {
+            console.log(e)
+        }
+        setIsLoading(false)
+    }
 
     useEffect(() => {
         document.title = 'Home';
 
         (async () => {
-            setIsLoading(true)
-            if (userInfo) {
-                try {
-                    const res = await Work.getAll({
-                        userId: userInfo._id as String,
-                        year: new Date().getFullYear(),
-                        month: new Date().getMonth() + 1
-                    })
-
-                    if (res?.errorCode === 0 && Array.isArray(res.data)) {
-                        setListEvent(res.data)
-                    }
-                } catch (e) {
-                    console.log(e)
-                }
+            if (userInfo?._id) {
+                await getListGroups()
             }
-            setIsLoading(false)
         })()
+    }, [userInfo])
 
-    }, [isModalOpen])
+    useEffect(() => {
+        (async () => {
+            await getListEventByGroup()
+        })()
+    }, [listGroup])
 
-    const getData = (data: WorkInfo[]): eventDataType[] => {
+    const getData = (data: WorkInfoDataItem[]): eventDataType[] => {
         return data.map((val): eventDataType => ({
-            start: val.workDateStart as String,
-            end: val.workDateEnd as String,
-            type: val.workStatus ? 'success' : 'warning',
-            content: val.workTitle as String
+            start: val.workId.workDateStart as String,
+            end: val.workId.workDateEnd as String,
+            type: val.workInfoStatus ? 'success' : 'warning',
+            content: val.workId.workTitle as String
         }))
     }
 
@@ -101,17 +128,12 @@ const Home = () => {
     }, [dateCellRender]);
 
     const handleSelect = (value: Dayjs) => {
-        const listData = getListData(value);
-        if (listData.length > 0) {
-            navigate(`/detail?userId=${userInfo._id}&workDateEnd=${listData[0].end}`)
-        } else {
-            const select = value.format('YYYY-MM-DD')
-            if (new Date(select).getTime() < new Date().getTime()) {
-                return
-            }
-            setDateSelect(select)
-            setIsModalOpen(true);
+        const select = value.format('YYYY-MM-DD')
+        if (new Date(select).getTime() < new Date().getTime()) {
+            return
         }
+        setDateSelect(select)
+        setIsModalOpen(true);
     };
 
     const handleCancel = () => {

@@ -6,7 +6,7 @@ import Logo from "~/components/Logo";
 const FormLayout = () => {
     return (
         <>
-            <header className="center header">
+            <header className="center header" style={{ backgroundColor: '#2c3e50' }}>
                 <div className="container">
                     <Logo />
                 </div>

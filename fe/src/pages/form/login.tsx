@@ -2,15 +2,18 @@ import React, { useState } from 'react';
 import './form.scss';
 import { UserData } from '~/types/dataType';
 import User from '~/services/user'
+import Group from '~/services/group'
 import { ToggleLoginFunction } from './index';
 import { message } from 'antd';
 import { useDispatch } from 'react-redux';
 import { actions } from '~/store/usersSlice';
+import { actions as actionsGroup } from '~/store/groupsSlice';
 import { useNavigate } from 'react-router-dom';
 import { LockOutlined, MailOutlined } from '@ant-design/icons';
 import signInImage from '~/assets/images/signin-image.jpg'
 import { ErrorLabel } from '~/types/global';
 import { isValidEmail, isValidPassword } from '~/utils/validation';
+import { useLoadingContext } from '~/utils/loadingContext';
 
 const Login = ({ ToggleLogin }: { ToggleLogin: ToggleLoginFunction }) => {
     const dispatch = useDispatch();
@@ -19,6 +22,7 @@ const Login = ({ ToggleLogin }: { ToggleLogin: ToggleLoginFunction }) => {
     const [password, setPassword] = useState<string>('');
     const [error, setError] = useState<ErrorLabel>({})
     const navigate = useNavigate();
+    const { setIsLoading } = useLoadingContext();
 
     const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setEmail(e.target.value);
@@ -49,6 +53,7 @@ const Login = ({ ToggleLogin }: { ToggleLogin: ToggleLoginFunction }) => {
 
         if (!isFormValid) return
 
+        setIsLoading(true)
         try {
             messageApi.open({
                 key: 'updatable',
@@ -60,6 +65,7 @@ const Login = ({ ToggleLogin }: { ToggleLogin: ToggleLoginFunction }) => {
                 userPassword: password,
             }
             const res = await User.signIn(user)
+
             if (res?.errorCode === 0) {
                 messageApi.open({
                     key: 'updatable',
@@ -68,7 +74,14 @@ const Login = ({ ToggleLogin }: { ToggleLogin: ToggleLoginFunction }) => {
                     duration: 2,
                 });
                 resetValue()
-                dispatch(actions.LoginAccount(res.data))
+                dispatch(actions.LoginAccount(res?.data))
+                if (!Array.isArray(res?.data)) {
+                    const resGroup = await Group.getOne(res.data?.userName as String)
+                    if (resGroup?.errorCode === 0) {
+                        dispatch(actionsGroup.setGroup(resGroup?.data))
+                    }
+                }
+                setIsLoading(false)
                 navigate("/")
 
             } else {
@@ -90,6 +103,7 @@ const Login = ({ ToggleLogin }: { ToggleLogin: ToggleLoginFunction }) => {
                 duration: 2,
             });
         }
+        setIsLoading(false)
     };
 
     return (

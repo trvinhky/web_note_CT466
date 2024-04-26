@@ -1,59 +1,83 @@
 import { useEffect, useState } from 'react';
 import './detail.scss'
 import { useLocation, useNavigate } from 'react-router-dom';
-import { WorkInfo } from '~/types/dataType';
+import { GroupInfoItem, WorkDetail } from '~/types/dataType';
 import Work from '~/services/work';
 import ImageWork from '~/assets/images/work.jpeg'
-import { BulbOutlined, ClockCircleOutlined, DeleteOutlined, EditOutlined, QuestionCircleOutlined, UserOutlined } from '@ant-design/icons';
+import { BulbOutlined, CheckCircleOutlined, ClockCircleOutlined, DeleteOutlined, EditOutlined, HistoryOutlined, QuestionCircleOutlined, UserOutlined } from '@ant-design/icons';
 import { useLoadingContext } from '~/utils/loadingContext';
 import { message, Popconfirm } from 'antd';
+import WorkInfoService from '~/services/workInfo';
+import GroupInfoService from '~/services/groupInfo';
+import { userInfoSelector } from '~/store/selectors';
+import { useSelector } from 'react-redux';
 
 function Detail() {
     const [messageApi, contextHolder] = message.useMessage();
     const location = useLocation();
+    const userInfo = useSelector(userInfoSelector)
     const searchParams = new URLSearchParams(location.search);
-    const userId = searchParams.get('userId');
-    const workDateEnd = searchParams.get('workDateEnd');
-    const [workInfo, setWorkInfo] = useState<WorkInfo>()
+    const groupId = searchParams.get('groupId');
+    const workId = searchParams.get('workId');
+    const [workInfo, setWorkInfo] = useState<WorkDetail>()
     const navigate = useNavigate();
     const { setIsLoading } = useLoadingContext();
+    const [groupInfo, setGroupInfo] = useState<GroupInfoItem>()
 
     useEffect(() => {
         (async () => {
             setIsLoading(true)
-            if (userId && workDateEnd) {
+            if (groupId && workId) {
                 try {
-                    const res = await Work.getInfo(userId, workDateEnd)
+                    const res = await WorkInfoService.getOne(
+                        groupId,
+                        workId
+                    )
 
-                    if (res?.errorCode === 0 && !Array.isArray(res.data)) {
-                        document.title = res?.data?.workTitle as string
+                    const resGroup = await GroupInfoService.getOne(groupId)
+
+                    if (res?.errorCode === 0 && !Array.isArray(res?.data) && resGroup?.errorCode === 0 && !Array.isArray(resGroup?.data)) {
+                        document.title = res.data?.workId.workTitle as string
                         setWorkInfo(res.data)
+                        setGroupInfo(resGroup.data)
                     }
 
                 } catch (e) {
                     console.log(e)
                 }
-            } else navigate('/')
+            } else navigate('/event-list')
             setIsLoading(false)
         })()
 
-    }, [userId, workDateEnd])
+    }, [groupId, workId])
 
     const handleEdit = () => {
-        navigate(`/edit?userId=${userId}&workDateEnd=${workDateEnd}`)
+        navigate(`/edit?userId=${userInfo._id}&groupId=${groupId}&workId=${workId}`)
     }
 
-    const handleDeleteEvent = async (id: String) => {
-        if (!id) return
+    const getAuth = () => {
+        if (groupInfo?.members) {
+            const checkIndex = groupInfo.members.findIndex((group) => group.admin === true)
+            return groupInfo.members[checkIndex].user
+        }
+        return null
+    }
+
+    const handleDeleteEvent = async () => {
         setIsLoading(true)
+        if (!workId || !groupId) {
+            setIsLoading(false)
+            return
+        }
         try {
             messageApi.open({
                 key: 'updatable',
                 type: 'loading',
                 content: 'Loading...',
             });
-            const res = await Work.delete(id)
-            if (res?.errorCode === 0) {
+            const resInfo = await WorkInfoService.delete(groupId, workId)
+            const res = await Work.delete(workId)
+            if (res?.errorCode === 0 && resInfo?.errorCode === 0) {
                 messageApi.open({
                     key: 'updatable',
                     type: 'success',
@@ -71,7 +95,6 @@ function Detail() {
                 });
             }
         } catch (e) {
-            console.log(e)
             messageApi.open({
                 key: 'updatable',
                 type: 'error',
@@ -87,42 +110,54 @@ function Detail() {
             {contextHolder}
             <div className="detail-info">
                 <h2 className="detail-info__title">
-                    <BulbOutlined /> {workInfo?.workTitle}
+                    <BulbOutlined /> {workInfo?.workId?.workTitle}
                 </h2>
                 <p className="detail-info__desc">
-                    {workInfo?.workDescription}
+                    {workInfo?.workId?.workDescription}
                 </p>
                 <div className="detail-info__time">
-                    <ClockCircleOutlined /> 2024-01-10 09:00:00 - 2024-02-01 10:00:00
+                    <HistoryOutlined /> 2024-01-10 09:00:00 - 2024-02-01 10:00:00
                 </div>
                 <div className="detail-info__auth">
-                    <UserOutlined /> <span>{workInfo?.userId?.userName}</span>
+                    <UserOutlined /> <span>{getAuth()?.userName}</span>
                 </div>
-
-                <div className="detail-info__group">
-                    <button
-                        className="detail-info__group--edit"
-                        onClick={handleEdit}
-                    >
-                        <EditOutlined />
-                    </button>
-                    <Popconfirm
-                        title="Delete event"
-                        description="Do you want to delete this event?"
-                        icon={<QuestionCircleOutlined style={{ color: 'red' }} />}
-                        onConfirm={() => handleDeleteEvent(workInfo?._id as String)}
-                    >
+                <div className="detail-info__member">
+                    <CheckCircleOutlined /> {
+                        workInfo?.members?.map((info) => (
+                            info.workInfoStatus && <small key={info.userId._id as string}>{info.userId.userName}</small>
+                        ))
+                    }
+                </div>
+                <div className="detail-info__member detail-info__member--wait">
+                    <ClockCircleOutlined /> {
+                        workInfo?.members?.map((info) => (
+                            !info.workInfoStatus && <small key={info.userId._id as string}>{info.userId.userName}</small>
+                        ))
+                    }
+                </div>
+                {
+                    userInfo._id === getAuth()?._id && <div className="detail-info__group">
                         <button
-                            className="detail-info__group--delete"
+                            className="detail-info__group--edit"
+                            onClick={handleEdit}
                         >
-                            <DeleteOutlined />
+                            <EditOutlined />
                         </button>
-                    </Popconfirm>
+                        <Popconfirm
+                            title="Delete event"
+                            description="Do you want to delete this event?"
+                            icon={<QuestionCircleOutlined style={{ color: 'red' }} />}
+                            onConfirm={handleDeleteEvent}
+                        >
+                            <button
+                                className="detail-info__group--delete"
+                            >
+                                <DeleteOutlined />
+                            </button>
+                        </Popconfirm>
 
-                </div>
-                <span className={`detail-info__status ${workInfo?.workStatus ? 'active' : ''}`}>
-                    {workInfo?.workStatus ? 'Complete' : 'Doing'}
-                </span>
+                    </div>
+                }
             </div>
         </div>
     )

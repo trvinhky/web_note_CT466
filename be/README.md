@@ -26,6 +26,14 @@ email: string;
 path: `/user/search?email=${email}`;
 ```
 
+### **Get Info**
+
+```ts
+// method: GET
+id: string;
+path: `/user/info?id=${id}`;
+```
+
 
 ### Group
 
@@ -52,6 +60,14 @@ path: `/group/edit?id=${id}`;
 // method: DELETE
 id: string;
 path: `/group/delete?id=${id}`;
+```
+
+### **Get Group**
+
+```ts
+// method: GET
+name: string;
+path: `/group/one?name=${name}`;
 ```
 
 
@@ -96,8 +112,7 @@ path: `/groupInfo/delete?groupId=${groupId}&userId=${userId}`;
 ```ts
 // method: GET
 groupId: string;
-status: boolean; // option
-path: `/groupInfo/one?groupId=${groupId}&status=${status}`;
+path: `/groupInfo/one?groupId=${groupId}`;
 ```
 
 ### **Get By userId GroupInfo**
@@ -137,23 +152,6 @@ id: string;
 path: `/work/delete/${id}`;
 ```
 
-### **Get All Work**
-
-```ts
-// method: GET
-year: int; 
-month: int; 
-path: `/work/all?year=${year}&month=${month}`;
-```
-
-### **Get All Work Current**
-
-```ts
-// method: GET
-count: int; // option
-path: `/work/current?count=${count}`;
-```
-
 
 ### WorkInfo
 
@@ -183,7 +181,6 @@ path: `/workInfo/edit?groupId=${groupId}&userId=${userId}&workId=${workId}`;
 groupId: string;
 workId: string;
 path: `/workInfo/edit?groupId=${groupId}&workId=${workId}`;
-// body: workInfoStatus - boolean
 ```
 
 ### **Get Info WorkInfo**
@@ -191,9 +188,8 @@ path: `/workInfo/edit?groupId=${groupId}&workId=${workId}`;
 ```ts
 // method: GET
 groupId: string;
-userId: string; 
 workId: string;
-path: `/workInfo/info?groupId=${groupId}&userId=${userId}&workId=${workId}`;
+path: `/workInfo/info?groupId=${groupId}&workId=${workId}`;
 ```
 
 ### **Get All WorkInfo**
@@ -203,8 +199,21 @@ path: `/workInfo/info?groupId=${groupId}&userId=${userId}&workId=${workId}`;
 groupId: string;
 userId: string; 
 status: boolean;
-path: `/workInfo/all?groupId=${groupId}&userId=${userId}&status=${status}`;
+year: int; // option
+month: int; // option
+path: `/workInfo/all?groupId=${groupId}&userId=${userId}&status=${status}&year=${year}&month=${month}`;
 ```
+
+### **Get All Current WorkInfo**
+
+```ts
+// method: GET
+groupId: string;
+userId: string; 
+count: int; // option
+path: `/workInfo/current?groupId=${groupId}&userId=${userId}&count=${count}`;
+```
+
 
 # Database
 users

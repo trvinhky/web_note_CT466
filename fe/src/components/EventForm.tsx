@@ -2,15 +2,16 @@ import '~/assets/scss/createEvent.scss'
 import type { GetProps } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
-import { Input, DatePicker, Radio, Flex, TimePicker, message } from 'antd';
+import { Input, DatePicker, Flex, TimePicker, message, Select } from 'antd';
 import { useEffect, useState } from 'react';
-import type { RadioChangeEvent } from 'antd';
 import Work from '~/services/work';
+import WorkInfo from '~/services/workInfo';
+import GroupInfo from '~/services/groupInfo';
 import { useSelector } from 'react-redux';
-import { userInfoSelector } from '~/store/selectors';
+import { groupSelector, userInfoSelector } from '~/store/selectors';
 import { useNavigate } from 'react-router-dom';
 import { WorkData } from '~/types/dataType';
-import { convertDate, DATEFORMAT, DATEFORMATFULL, TIMEFORMAT } from '~/utils/const';
+import { DATEFORMAT, TIMEFORMAT } from '~/utils/const';
 import { useLoadingContext } from '~/utils/loadingContext';
 
 type RangePickerProps = GetProps<typeof DatePicker.RangePicker>;
@@ -20,55 +21,70 @@ dayjs.extend(customParseFormat);
 const { RangePicker } = DatePicker;
 
 type PropsType = {
-    isEdit?: boolean
     isModal?: boolean
     data?: WorkData
     setIsModalOpen?: React.Dispatch<React.SetStateAction<boolean>>
+    isGroups?: boolean
 }
 
-const EventForm = ({ isEdit, isModal, data, setIsModalOpen }: PropsType) => {
+type GroupSelect = {
+    value: string
+    label: string
+}
+
+const EventForm = ({ isModal, data, setIsModalOpen, isGroups }: PropsType) => {
     const [messageApi, contextHolder] = message.useMessage();
     const navigate = useNavigate();
     const userInfo = useSelector(userInfoSelector)
+    const groupInfo = useSelector(groupSelector)
     const [title, setTitle] = useState<string>('')
     const [description, setDescription] = useState<string>('')
-    const [status, setStatus] = useState<boolean>(false)
     const [listDate, setListDate] = useState<Dayjs[]>([])
     const [listTime, setListTime] = useState<Dayjs[]>([])
+    const [listGroup, setListGroup] = useState<GroupSelect[]>([])
+    const [groupId, setGroupId] = useState<String>()
+    const [selectGroup, setSelectGroup] = useState<string>('')
 
     const { setIsLoading } = useLoadingContext();
 
     useEffect(() => {
-        setIsLoading(true)
-        if (isEdit && data) {
-            setTitle(data.workTitle as string)
-            setDescription(data.workDescription as string)
-            setStatus(data.workStatus as boolean)
-            setListDate([
-                dayjs(convertDate(data.workDateStart as string, DATEFORMAT)),
-                dayjs(convertDate(data.workDateEnd as string, DATEFORMAT)),
-            ])
+        setGroupId(groupInfo?._id);
+        (async () => {
+            if (isGroups && userInfo?._id) {
+                setIsLoading(true)
+                try {
+                    const res = await GroupInfo.getByUser(userInfo._id as String, true)
+                    if (res?.errorCode === 0 && Array.isArray(res?.data)) {
+                        let results: GroupSelect[] = []
+                        res.data.forEach((data) => {
+                            if (data.groupId?.groupName !== userInfo.userName) {
+                                results = [...results, {
+                                    label: data.groupId?.groupName as string,
+                                    value: data.groupId?._id as string
+                                }]
+                            }
+                        })
+                        if (results.length > 0) setSelectGroup(results[0].value)
+                        setListGroup(results)
+                    }
+                } catch (e) {
+                    console.log(e)
+                }
+                setIsLoading(false)
+            }
+        })()
+    }, [isGroups])
 
-            setListTime([
-                dayjs(convertDate(data.workDateStart as string, DATEFORMATFULL)),
-                dayjs(convertDate(data.workDateEnd as string, DATEFORMATFULL)),
-            ])
-        }
-
+    useEffect(() => {
         if (isModal && data) {
             setListDate([
                 dayjs(data.workDateStart as string)
             ])
         }
-        setIsLoading(false)
-    }, [data, isEdit, isModal])
+    }, [data, isModal])
 
     const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setTitle(e.target.value);
-    };
-
-    const handleStatusChange = ({ target: { value } }: RadioChangeEvent) => {
-        setStatus(value);
     };
 
     const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -138,36 +154,60 @@ const EventForm = ({ isEdit, isModal, data, setIsModalOpen }: PropsType) => {
 
         setIsLoading(true)
         try {
-            let res
-            if (isEdit) {
-                res = await Work.update(data?._id as String, {
-                    workTitle: title,
-                    workDescription: description,
-                    workDateStart: `${listDate[0].format(DATEFORMAT)} ${listTime[0].format(TIMEFORMAT)}`,
-                    workDateEnd: `${listDate[1].format(DATEFORMAT)} ${listTime[1].format(TIMEFORMAT)}`,
-                    workStatus: status
-                })
-            } else {
-                res = await Work.create({
-                    workTitle: title,
-                    workDescription: description,
-                    workDateStart: `${listDate[0].format(DATEFORMAT)} ${listTime[0].format(TIMEFORMAT)}`,
-                    workDateEnd: `${listDate[1].format(DATEFORMAT)} ${listTime[1].format(TIMEFORMAT)}`,
-                    userId: userInfo._id,
-                    workStatus: status
-                })
+            const groupIdCurrent: String = isGroups ? selectGroup : groupId as String
+            const res = await Work.create({
+                workTitle: title,
+                workDescription: description,
+                workDateStart: `${listDate[0].format(DATEFORMAT)} ${listTime[0].format(TIMEFORMAT)}`,
+                workDateEnd: `${listDate[1].format(DATEFORMAT)} ${listTime[1].format(TIMEFORMAT)}`,
+                groupId: groupIdCurrent,
+            })
+            if (res?.errorCode === 0 && !Array.isArray(res?.data)) {
+                const idWork = res.data?._id as String
+                if (isGroups) {
+                    // create event multiple
+                    const resMember = await GroupInfo.getOne(groupIdCurrent)
+                    if (resMember?.errorCode === 0 && !Array.isArray(resMember?.data)) {
+                        resMember?.data?.members?.forEach(async (member) => {
+                            const resInfo = await WorkInfo.create({
+                                groupId: groupIdCurrent,
+                                workId: idWork,
+                                userId: member.user._id as String
+                            })
+                            if (resInfo.errorCode !== 0) {
+                                await Work.delete(idWork)
+                                return
+                            }
+                        })
+                    } else await Work.delete(idWork)
+                } else {
+                    // create event single
+                    const resInfo = await WorkInfo.create({
+                        groupId: groupIdCurrent,
+                        userId: userInfo._id as String,
+                        workId: idWork
+                    })
+
+                    if (resInfo?.errorCode !== 0) {
+                        messageApi.open({
+                            key: 'updatable',
+                            type: 'error',
+                            content: resInfo.message,
+                            duration: 2,
+                        });
+                        await Work.delete(idWork)
+                        return
+                    }
+                }
             }
 
-            if (!res) return
-
-            if (res.errorCode === 0) {
+            if (res?.errorCode === 0) {
                 messageApi.open({
                     key: 'updatable',
                     type: 'success',
                     content: res.message,
                     duration: 2,
                 });
-                if (isEdit) navigate("/event-list")
                 if (isModal && setIsModalOpen) setIsModalOpen(false)
                 resetValue()
             } else {
@@ -183,18 +223,22 @@ const EventForm = ({ isEdit, isModal, data, setIsModalOpen }: PropsType) => {
             messageApi.open({
                 key: 'updatable',
                 type: 'error',
-                content: isEdit ? 'Edit failed' : 'Create failed',
+                content: 'Create failed',
                 duration: 2,
             });
         }
         setIsLoading(false)
     };
 
+    const handleChangeGroup = (value: string) => {
+        setSelectGroup(value)
+    };
+
     return (
         <div className="center">
             {contextHolder}
             <form className="create-form" onSubmit={handleSubmit}>
-                {!isModal && <h2 className="title">{isEdit ? 'Edit Event' : 'Create New Event'}</h2>}
+                {!isModal && <h2 className="title">Create New Event</h2>}
                 <Flex gap='middle' align='flex-end'>
                     <div className="group-input" style={{ 'flex': 1 }}>
                         <label htmlFor="title">Title</label>
@@ -206,17 +250,16 @@ const EventForm = ({ isEdit, isModal, data, setIsModalOpen }: PropsType) => {
                         />
                     </div>
                     {
-                        !isModal &&
+                        isGroups &&
                         <div className="group-input">
-                            <Radio.Group
-                                buttonStyle="solid"
-                                style={{ display: 'flex' }}
-                                onChange={handleStatusChange}
-                                value={status}
-                            >
-                                <Radio.Button value={false}>Doing</Radio.Button>
-                                <Radio.Button value={true}>Complete</Radio.Button>
-                            </Radio.Group>
+                            <Select
+                                style={{ minWidth: 120 }}
+                                allowClear
+                                options={listGroup}
+                                defaultValue={selectGroup}
+                                value={selectGroup}
+                                onChange={handleChangeGroup}
+                            />
                         </div>
                     }
                 </Flex>
@@ -254,8 +297,8 @@ const EventForm = ({ isEdit, isModal, data, setIsModalOpen }: PropsType) => {
                     </div>
 
                 </Flex>
-                <div className="group-btn">
-                    <button type="submit">{isEdit ? 'Save' : 'Create'}</button>
+                <div className="group-btn" style={{ cursor: 'inherit' }}>
+                    <button type="submit">Create</button>
                 </div>
             </form>
         </div>

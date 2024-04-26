@@ -30,7 +30,12 @@ const userControllers = {
             if (user) {
                 return res.status(200).json({
                     errorCode: 0,
-                    message: "Đăng ký tài khoản thành công!"
+                    message: "Đăng ký tài khoản thành công!",
+                    data: {
+                        _id: user._id,
+                        userName: user.userName,
+                        userEmail: user.userEmail
+                    }
                 })
             } else {
                 return res.status(404).json({
@@ -92,11 +97,11 @@ const userControllers = {
     search: asyncHandler(async (req, res) => {
         const { email } = req.query
 
-        // kiểm email
+        // kiểm tra email
         if (!email) {
             return res.status(400).json({
                 errorCode: 1,
-                message: "Email trường là bắt buộc!"
+                message: "Email là trường bắt buộc!"
             });
         }
 
@@ -104,7 +109,7 @@ const userControllers = {
             // tìm kiếm người dùng trong database
             const users = await userModel.find({ userEmail: { $regex: email, $options: 'i' } }, '-userPassword')
 
-            // kiểm tra người dùng vừa lấy và so khớp mật khẩu
+            // kiểm tra người dùng vừa lấy 
             if (users) {
                 return res.status(201).json({
                     errorCode: 0,
@@ -125,6 +130,43 @@ const userControllers = {
             })
         }
     }),
+    // lấy thông tin người dùng theo id
+    getInfo: asyncHandler(async (req, res) => {
+        const { id } = req.query
+
+        // kiểm tra id
+        if (!id) {
+            return res.status(400).json({
+                errorCode: 1,
+                message: "id là trường bắt buộc!"
+            });
+        }
+
+        try {
+            // tìm kiếm người dùng trong database
+            const user = await userModel.findOne({ _id: id }, '-userPassword')
+
+            // kiểm tra người dùng vừa lấy
+            if (user) {
+                return res.status(201).json({
+                    errorCode: 0,
+                    data: user,
+                    message: "Lấy thông tin tài khoản thành công!"
+                })
+            } else {
+                return res.status(404).json({
+                    errorCode: 2,
+                    message: "Không tìm thấy tài khoản nào!"
+                })
+            }
+        } catch (err) {
+            return res.status(500).json({
+                errorCode: 3,
+                message: "Lỗi server!",
+                error: err.message
+            })
+        }
+    })
 }
 
 module.exports = userControllers

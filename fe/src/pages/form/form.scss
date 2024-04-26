@@ -7,13 +7,27 @@
 .form {
     background-color: #fff;
     display: flex;
+    flex-wrap: wrap;
     padding: 4rem;
     border-radius: 20px;
     overflow: hidden;
     gap: 3rem;
 
+    @media (max-width: 768px) {
+        justify-content: center;
+        width: 100%;
+    }
+
+    @media (max-width: 400px) {
+        padding: 2rem;
+    }
+
     &-content {
         min-width: 20vw;
+
+        @media (max-width: 768px) {
+            width: 100%;
+        }
     }
 
     &-title {

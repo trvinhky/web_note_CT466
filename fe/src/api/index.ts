@@ -1,6 +1,6 @@
 import axios from "axios";
 
-axios.defaults.baseURL = import.meta.env.VITE_URL_BACKEND || 'http://localhost:5001/api/v1';
+axios.defaults.baseURL = import.meta.env.VITE_URL_BACKEND || 'http://localhost:5001/api/v2';
 
 class NotesAPI {
     protected async getAPI(url: string) {

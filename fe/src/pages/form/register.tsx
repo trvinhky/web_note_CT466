@@ -2,6 +2,8 @@ import './form.scss'
 import { useState } from "react";
 import { isValidEmail, isValidPassword, isValidText } from "~/utils/validation";
 import User from '~/services/user'
+import Group from '~/services/group'
+import GroupInfo from '~/services/groupInfo'
 import { UserData } from '~/types/dataType';
 import { ToggleLoginFunction } from './index';
 import { message } from 'antd';
@@ -77,13 +79,32 @@ const Register = ({ ToggleLogin }: { ToggleLogin: ToggleLoginFunction }) => {
                 userPassword: password,
             }
             const res = await User.signUp(user)
-            if (res?.errorCode === 0) {
-                messageApi.open({
-                    key: 'updatable',
-                    type: 'success',
-                    content: res.message,
-                    duration: 2,
-                });
+            const resGroup = await Group.create({ groupName: userName })
+            if (res?.errorCode === 0 && resGroup?.errorCode === 0) {
+                if (!Array.isArray(res.data) && !Array.isArray(resGroup.data)) {
+                    const userData = res.data
+                    const groupData = resGroup.data
+                    const resInfo = await GroupInfo.create({
+                        userId: userData?._id as String,
+                        groupId: groupData?._id as String
+                    })
+
+                    if (resInfo?.errorCode === 0) {
+                        messageApi.open({
+                            key: 'updatable',
+                            type: 'success',
+                            content: res.message,
+                            duration: 2,
+                        });
+                    } else {
+                        messageApi.open({
+                            key: 'updatable',
+                            type: 'error',
+                            content: resInfo.message,
+                            duration: 2,
+                        });
+                    }
+                }
                 resetValue()
             } else {
                 messageApi.open({

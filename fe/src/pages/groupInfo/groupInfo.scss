@@ -1,0 +1,100 @@
+.group-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &__box {
+        width: 100%;
+        max-width: 50vw;
+
+        @media (min-width: 768px) and (max-width: 1024px) {
+            max-width: 70vw;
+        }
+
+        @media (max-width: 768px) {
+            max-width: 95vw;
+        }
+    }
+
+    &__title {
+        font-size: 2rem;
+        text-align: center;
+        color: #f1c40f;
+        margin-bottom: 10px;
+    }
+
+    &__space {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
+
+        span:first-child {
+            color: #eb4d4b;
+            font-style: italic;
+        }
+
+        span:last-child {
+            font-weight: 600;
+        }
+    }
+
+    &__members {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        font-weight: 600;
+        font-size: 1.2rem;
+        margin-bottom: 10px;
+        margin-top: 15px;
+
+        span {
+            display: inline-block;
+            padding: 4px 10px;
+            border: 1px solid currentColor;
+            border-radius: 5px;
+            font-size: 1rem;
+            color: #6ab04c;
+        }
+
+        &--others {
+            span {
+                color: #535c68;
+            }
+        }
+    }
+
+    &__actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 25px;
+
+        button {
+            padding: 6px 10px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            color: #fff;
+        }
+
+        &--edit {
+            background-color: #f1c40f;
+        }
+
+
+        &--delete {
+            background-color: #e84118;
+        }
+    }
+
+    &__modal {
+        label {
+            margin-bottom: 6px;
+            display: block;
+        }
+    }
+}

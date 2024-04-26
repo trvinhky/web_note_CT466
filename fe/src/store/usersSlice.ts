@@ -1,5 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
 import { UserData } from '~/types/dataType';
+import { deleteCookie, setIdFromCookie } from '~/utils/cookieActions';
 
 type UserStateType = {
     info: UserData
@@ -18,13 +19,16 @@ const usersSlice = createSlice({
         LoginAccount: (state, action) => {
             state.isLogin = true;
             state.info = action.payload;
+            setIdFromCookie('user_id', state.info._id as string)
         },
         LogOut: (state) => {
             state.isLogin = false;
             state.info = {};
+            deleteCookie('user_id')
         },
         setInfo: (state, action) => {
             state.info = action.payload;
+            setIdFromCookie('user_id', state.info._id as string)
         }
     },
 });

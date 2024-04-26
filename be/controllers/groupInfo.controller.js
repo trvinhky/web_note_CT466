@@ -36,7 +36,7 @@ const groupInfoControllers = {
                     errorCode: 2
                 })
             }
-        } catch (e) {
+        } catch (err) {
             return res.status(500).json({
                 errorCode: 3,
                 message: "Lỗi server!",
@@ -86,7 +86,7 @@ const groupInfoControllers = {
                     errorCode: 2
                 })
             }
-        } catch (e) {
+        } catch (err) {
             return res.status(500).json({
                 errorCode: 3,
                 message: "Lỗi server!",
@@ -131,7 +131,7 @@ const groupInfoControllers = {
                     errorCode: 2
                 })
             }
-        } catch (e) {
+        } catch (err) {
             return res.status(500).json({
                 errorCode: 3,
                 message: "Lỗi server!",
@@ -169,7 +169,7 @@ const groupInfoControllers = {
                     errorCode: 2
                 })
             }
-        } catch (e) {
+        } catch (err) {
             return res.status(500).json({
                 errorCode: 3,
                 message: "Lỗi server!",
@@ -179,7 +179,7 @@ const groupInfoControllers = {
     }),
     // Lấy thông tin group
     getOne: asyncHandler(async (req, res) => {
-        const { groupId, status } = req.query
+        const { groupId } = req.query
 
         // kiểm tra id group
         if (!groupId) {
@@ -189,21 +189,37 @@ const groupInfoControllers = {
             })
         }
 
-        const groupInfoStatus = status ? JSON.parse(status) : false
-
         try {
             // tìm kiếm thông tin group
-            const groupInfo = await groupInfoModel.find({ groupId, groupInfoStatus }).populate([
-                { path: 'groupId' },
-                { path: 'userId', select: '-userPassword' }
-            ])
+            const groupInfo = await groupInfoModel
+                .find({ groupId })
+                .populate([
+                    { path: 'groupId' },
+                    { path: 'userId', select: '-userPassword' }
+                ])
 
             // kiểm tra thông tin group vừa lấy
             if (groupInfo) {
+                const members = []
+                let group
+                groupInfo.forEach((el) => {
+                    if (members.length === 0) {
+                        group = el.groupId
+                    }
+                    members.push({
+                        user: el.userId,
+                        admin: el.groupInfoAdmin,
+                        status: el.groupInfoStatus
+                    })
+                })
+
                 return res.status(201).json({
                     message: "Lấy thông tin group thành công!",
                     errorCode: 0,
-                    data: groupInfo
+                    data: {
+                        group,
+                        members
+                    }
                 })
             } else {
                 return res.status(404).json({
@@ -211,7 +227,7 @@ const groupInfoControllers = {
                     errorCode: 2
                 })
             }
-        } catch (e) {
+        } catch (err) {
             return res.status(500).json({
                 errorCode: 3,
                 message: "Lỗi server!",
@@ -252,7 +268,7 @@ const groupInfoControllers = {
                     errorCode: 2
                 })
             }
-        } catch (e) {
+        } catch (err) {
             return res.status(500).json({
                 errorCode: 3,
                 message: "Lỗi server!",
