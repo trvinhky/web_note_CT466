@@ -79,6 +79,15 @@ const Login = ({ ToggleLogin }: { ToggleLogin: ToggleLoginFunction }) => {
                     const resGroup = await Group.getOne(res.data?.userName as String)
                     if (resGroup?.errorCode === 0) {
                         dispatch(actionsGroup.setGroup(resGroup?.data))
+                    } else {
+                        messageApi.open({
+                            key: 'updatable',
+                            type: 'error',
+                            content: 'Sign In failed',
+                            duration: 2,
+                        });
+                        setIsLoading(false)
+                        return
                     }
                 }
                 setIsLoading(false)

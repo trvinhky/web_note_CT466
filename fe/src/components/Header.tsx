@@ -6,7 +6,7 @@ import { BarsOutlined, BellFilled, CheckCircleOutlined, CloseCircleOutlined, Exc
 import { userInfoSelector } from '~/store/selectors';
 import { useDispatch, useSelector } from 'react-redux';
 import { GroupInfoDataItem, WorkInfoDataItem } from '~/types/dataType';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { actions } from '~/store/usersSlice';
 import { useLoadingContext } from '~/utils/loadingContext';
 import NotFound from '~/assets/images/notification.jpg'
@@ -34,6 +34,7 @@ const Header = () => {
     const [api, contextHolderNotification] = notification.useNotification();
     const [notificationList, setNotificationList] = useState<Notification[]>([])
     const [groupsWait, setGroupsWait] = useState<GroupInfoDataItem[]>([])
+    const navigate = useNavigate();
 
     const getListGroups = async (isRes = true) => {
         try {
@@ -98,6 +99,8 @@ const Header = () => {
             if (userInfo?._id) {
                 await getListGroups()
                 await getListGroups(false)
+            } else {
+                navigate('/form')
             }
         })()
     }, [])
